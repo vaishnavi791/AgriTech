@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 480" width="100%" height="100%" fill="none">
   <defs>
-    <!-- Soft sky and terrain gradients -->
+    {/* Soft sky and terrain gradients */}
     <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#FBF9F5" />
       <stop offset="100%" stop-color="#F4EFE6" />
@@ -27,105 +27,105 @@
     </linearGradient>
   </defs>
 
-  <!--  -->
+  {/* Background Canvas */}
   <rect width="600" height="480" rx="24" fill="url(#skyGrad)" />
   <rect width="598" height="478" x="1" y="1" rx="23" stroke="#E6E0D4" stroke-width="1.5" />
 
-  <!--  -->
+  {/* Morning Sun / Horizon Arc */}
   <circle cx="300" cy="200" r="105" fill="url(#sunGrad)" opacity="0.45" />
   <circle cx="300" cy="200" r="85" fill="#FAF6EE" opacity="0.8" />
   <circle cx="300" cy="200" r="65" fill="#E2C17C" opacity="0.4" />
 
-  <!--  -->
+  {/* Atmosphere & Sensor Observation Grid (Intelligent Agronomy lines) */}
   <g stroke="#A4B69A" stroke-width="1" stroke-dasharray="4 6" opacity="0.55">
     <line x1="80" y1="120" x2="520" y2="120" />
     <line x1="120" y1="170" x2="480" y2="170" />
     <line x1="160" y1="220" x2="440" y2="220" />
-    <!--  -->
+    {/* Circular sensory radii */}
     <circle cx="300" cy="280" r="170" stroke-dasharray="3 7" />
     <circle cx="300" cy="280" r="230" stroke-dasharray="3 8" opacity="0.3" />
   </g>
 
-  <!--  -->
+  {/* Distant Hills / Forest Horizon */}
   <path d="M0 250 C120 220 220 235 340 215 C440 198 520 225 600 240 L600 480 L0 480 Z" fill="url(#terrace1)" opacity="0.85" />
   <path d="M0 275 C100 255 200 270 310 250 C410 230 500 250 600 270 L600 480 L0 480 Z" fill="#D3DEC9" opacity="0.6" />
 
-  <!--  -->
+  {/* Terraced Agricultural Contours */}
   <path d="M0 310 C140 280 260 325 390 295 C490 270 560 290 600 305 L600 480 L0 480 Z" fill="url(#terrace2)" />
   
-  <!--  -->
+  {/* Furrow crop lines on the middle terrace */}
   <g stroke="#53634C" stroke-width="1.2" opacity="0.4">
     <path d="M40 335 C150 310 260 345 380 320 C460 302 540 318 580 330" />
     <path d="M20 355 C140 328 270 365 390 338 C480 318 550 335 600 348" />
   </g>
 
-  <!--  -->
+  {/* Deep Botanical Green Primary Terrace */}
   <path d="M0 365 C130 335 240 375 360 350 C470 325 540 345 600 358 L600 480 L0 480 Z" fill="url(#terrace3)" />
 
-  <!--  -->
+  {/* Foreground Rich Soil Bed */}
   <path d="M0 420 C110 395 250 435 390 410 C490 392 550 405 600 415 L600 480 L0 480 Z" fill="url(#soilBase)" />
 
-  <!--  -->
-  <!--  -->
+  {/* Prominent Agronomic Sprout / Grain Plants in Foreground */}
+  {/* Plant 1: Center Left - Sprouting Seedling */}
   <g transform="translate(180, 310)">
-    <!--  -->
+    {/* Stem */}
     <path d="M25 110 C25 60 20 30 15 0" stroke="#DFE7DA" stroke-width="3" stroke-linecap="round" />
-    <!--  -->
+    {/* Leaves */}
     <path d="M16 35 C-10 20 -15 -10 5 -5 C20 -2 20 20 16 35 Z" fill="#A4B69A" />
     <path d="M19 18 C40 5 50 -15 35 -22 C22 -28 12 -5 19 18 Z" fill="#EFF3EC" />
-    <!--  -->
+    {/* Data Point Marker on sprout */}
     <circle cx="15" cy="0" r="5" fill="#FAF6EE" stroke="#2F5D50" stroke-width="2" />
   </g>
 
-  <!--  -->
+  {/* Plant 2: Center - Healthy Mature Grain/Wheat Stalk */}
   <g transform="translate(290, 245)">
-    <!--  -->
+    {/* Stem */}
     <path d="M20 175 C20 100 15 50 10 0" stroke="#FAF6EE" stroke-width="3.5" stroke-linecap="round" />
-    <!--  -->
+    {/* Grain Heads */}
     <path d="M10 0 C4 -10 2 -25 10 -35 C18 -25 16 -10 10 0 Z" fill="#E2C17C" />
     <path d="M10 -15 C-2 -22 -6 -35 0 -42 C8 -38 10 -25 10 -15 Z" fill="#C49A45" />
     <path d="M10 -15 C22 -22 26 -35 20 -42 C12 -38 10 -25 10 -15 Z" fill="#C49A45" />
     <path d="M10 -30 C-2 -37 -4 -50 2 -55 C9 -50 10 -40 10 -30 Z" fill="#E2C17C" />
     <path d="M10 -30 C22 -37 24 -50 18 -55 C11 -50 10 -40 10 -30 Z" fill="#E2C17C" />
-    <!--  -->
+    {/* Lateral Leaves */}
     <path d="M16 65 C45 50 65 30 75 5 C55 12 35 35 16 65 Z" fill="#A4B69A" />
     <path d="M14 95 C-15 80 -35 60 -45 35 C-25 42 -5 65 14 95 Z" fill="#889E7D" />
-    <!--  -->
+    {/* Intelligence Nodes */}
     <circle cx="10" cy="-55" r="4" fill="#2F5D50" stroke="#FAF6EE" stroke-width="1.5" />
   </g>
 
-  <!--  -->
+  {/* Plant 3: Center Right - Foliage Specimen */}
   <g transform="translate(400, 290)">
-    <!--  -->
+    {/* Stem */}
     <path d="M10 130 C12 80 18 40 25 10" stroke="#DFE7DA" stroke-width="3" stroke-linecap="round" />
-    <!--  -->
+    {/* Leaves */}
     <path d="M18 55 C-8 45 -18 20 -10 5 C0 5 12 30 18 55 Z" fill="#A4B69A" />
     <path d="M22 30 C45 20 52 -5 42 -15 C30 -12 25 10 22 30 Z" fill="#EFF3EC" />
     <circle cx="25" cy="10" r="5" fill="#FAF6EE" stroke="#2F5D50" stroke-width="2" />
   </g>
 
-  <!--  -->
+  {/* Smart Agriculture Tech Connectivity Layer (Data nodes & sensor telemetry lines) */}
   <g stroke="#2F5D50" stroke-width="1.5">
-    <!--  -->
+    {/* Connection lines between data points */}
     <line x1="195" y1="310" x2="300" y2="190" stroke-dasharray="3 4" opacity="0.6" />
     <line x1="425" y1="300" x2="300" y2="190" stroke-dasharray="3 4" opacity="0.6" />
     <line x1="195" y1="310" x2="110" y2="280" stroke-dasharray="3 4" opacity="0.4" />
     <line x1="425" y1="300" x2="500" y2="280" stroke-dasharray="3 4" opacity="0.4" />
 
-    <!--  -->
-    <!--  -->
+    {/* Floating Data Point Badges / Telemetry Symbols */}
+    {/* Node 1: Soil metric */}
     <g transform="translate(100, 265)">
       <circle cx="12" cy="12" r="14" fill="#FAF6EE" stroke="#A4B69A" stroke-width="1.5" />
       <path d="M12 6 C12 6 7 12 7 14.5 C7 17.2 9.2 19.5 12 19.5 C14.8 19.5 17 17.2 17 14.5 C17 12 12 6 12 6 Z" fill="#2F5D50" />
     </g>
 
-    <!--  -->
+    {/* Node 2: Top Central Cloud / Advisory Node */}
     <g transform="translate(285, 175)">
       <circle cx="15" cy="15" r="16" fill="#FAF6EE" stroke="#2F5D50" stroke-width="2" />
       <path d="M11 15 L14 18 L19 12" stroke="#2F5D50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
     </g>
 
-    <!--  -->
+    {/* Node 3: Market / Mandi Analytics Node */}
     <g transform="translate(490, 265)">
       <circle cx="12" cy="12" r="14" fill="#FAF6EE" stroke="#A4B69A" stroke-width="1.5" />
       <path d="M7 16 L11 12 L14 14 L18 9" stroke="#2F5D50" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none" />
