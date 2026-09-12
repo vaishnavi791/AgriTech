@@ -23,6 +23,7 @@
   }
 }
 
+/* Custom scrollbars */
 /* Warm agricultural scrollbars */
 ::-webkit-scrollbar {
   width: 7px;
@@ -42,7 +43,47 @@
   background: #A4B69A;
 }
 
-/* Custom utility for clean subtle card transition */
+/* Custom utilities for editorial agtech UI */
 .transition-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+
+.backdrop-blur-glass {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Subtle scanning line animation for leaf disease detection preview */
+@keyframes scanline {
+  0% {
+    top: 5%;
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    top: 92%;
+    opacity: 0.3;
+  }
+}
+
+.animate-scanline {
+  animation: scanline 2.8s ease-in-out infinite alternate;
+}
+
+/* Subtle fade-up entrance */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

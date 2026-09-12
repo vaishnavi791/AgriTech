@@ -23,6 +23,17 @@ export const Chatbot = () => {
   };
 
   useEffect(() => {
+    const handleHash = () => {
+      if (window.location.hash === '#chatbot') {
+        setIsOpen(true);
+      }
+    };
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
+  useEffect(() => {
     if (isOpen) {
       scrollToBottom();
     }

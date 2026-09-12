@@ -80,7 +80,6 @@ export const PRIORITY_FEATURES = [
     description: 'Find the optimal crop suited for your soil N-P-K levels, pH, rainfall, and climate conditions.',
     path: '/crop-recommendation',
     icon: 'Sprout',
-    color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     color: 'bg-agri-50 text-agri-700 border-agri-200',
   },
   {
@@ -89,7 +88,6 @@ export const PRIORITY_FEATURES = [
     description: 'Upload photos of plant leaves for AI-powered disease identification and treatment remedies.',
     path: '/disease-detection',
     icon: 'ScanLine',
-    color: 'bg-amber-50 text-amber-700 border-amber-200',
     color: 'bg-harvest-50 text-harvest-600 border-harvest-100',
   },
   {
@@ -98,7 +96,6 @@ export const PRIORITY_FEATURES = [
     description: 'Calculate input expenses, labor, machinery, and fertilizer costs to project your net profitability.',
     path: '/cost-estimation',
     icon: 'Calculator',
-    color: 'bg-blue-50 text-blue-700 border-blue-200',
     color: 'bg-cream-200 text-earth-charcoal border-cream-300',
   },
   {
@@ -107,7 +104,6 @@ export const PRIORITY_FEATURES = [
     description: 'Forecast APMC mandi commodity prices using historical seasonal trends to plan the best selling time.',
     path: '/price-forecasting',
     icon: 'TrendingUp',
-    color: 'bg-purple-50 text-purple-700 border-purple-200',
     color: 'bg-sage-100 text-agri-800 border-sage-300',
   },
   {
@@ -116,7 +112,6 @@ export const PRIORITY_FEATURES = [
     description: 'Ask instant agronomic questions 24/7 in natural language for tailored farming advisory.',
     path: '#chatbot',
     icon: 'Bot',
-    color: 'bg-green-50 text-green-700 border-green-200',
     color: 'bg-agri-50 text-agri-800 border-agri-200',
   },
 ];
