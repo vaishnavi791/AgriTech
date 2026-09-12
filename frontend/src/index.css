@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #18231E;
+    background-color: #FBF9F5;
+  }
+
+  /* Headings use editorial serif for traditional agricultural authority */
+  h1, h2, h3, .font-display {
+    font-family: 'Lora', Georgia, serif;
+    letter-spacing: -0.015em;
+  }
+
+  /* Accessible outline styling */
+  :focus-visible {
+    outline: 2px solid #2F5D50;
+    outline-offset: 2px;
+  }
+}
+
+/* Accessible reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  video {
+    animation: none !important;
+  }
+}
+
+/* Warm agricultural scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F4EFE6;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C7D5BF;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #A4B69A;
+}
+
+/* Custom utilities for editorial agtech UI */
+.transition-card {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+
+.backdrop-blur-glass {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Subtle scanning line animation for leaf disease detection preview */
+@keyframes scanline {
+  0% {
+    top: 5%;
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    top: 92%;
+    opacity: 0.3;
+  }
+}
+
+.animate-scanline {
+  animation: scanline 2.8s ease-in-out infinite alternate;
+}
+
+/* Subtle fade-up entrance */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
