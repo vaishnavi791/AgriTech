@@ -1,6 +1,7 @@
 # =========================
 # Python / Backend
 # =========================
+
 __pycache__/
 *.py[cod]
 *$py.class
@@ -20,6 +21,7 @@ env/
 # =========================
 # Node / Frontend
 # =========================
+
 node_modules/
 /.pnp
 .pnp.js
@@ -43,6 +45,7 @@ lerna-debug.log*
 # =========================
 # IDE
 # =========================
+
 .vscode/
 .idea/
 *.suo
@@ -52,7 +55,8 @@ lerna-debug.log*
 *.sw?
 
 # =========================
-# OS
+# OS generated files
 # =========================
+
 .DS_Store
 Thumbs.db
