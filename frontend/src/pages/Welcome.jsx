@@ -3,14 +3,15 @@ import { Link } from 'react-router-dom';
 import { 
   Sprout, 
   ScanLine, 
-  Calendar 
+  Calendar,
+  LogOut
 } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
 import { PRIORITY_FEATURES } from '../utils/constants';
 import FeatureCard from '../components/FeatureCard';
 
 export const Welcome = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const userName = user?.full_name || user?.name || user?.email?.split('@')[0] || 'Farmer';
 
   const today = new Date().toLocaleDateString('en-US', {
@@ -53,6 +54,13 @@ export const Welcome = () => {
               <ScanLine className="w-4 h-4" />
               <span>Detect Disease</span>
             </Link>
+            <button
+              onClick={logout}
+              className="inline-flex items-center space-x-2 px-4 py-2 bg-agri-800/80 hover:bg-agri-700 text-cream-200 border border-agri-700 text-xs sm:text-sm font-semibold rounded-lg transition"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sign Out</span>
+            </button>
           </div>
         </div>
       </div>

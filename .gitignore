@@ -6,6 +6,7 @@ __pycache__/
 *$py.class
 *.so
 .Python
+backend\.env
 
 # Virtual environments
 .venv/
@@ -17,12 +18,15 @@ env/
 .env.*
 !.env.example
 
+
+
 # =========================
 # Node / Frontend
 # =========================
 node_modules/
 /.pnp
 .pnp.js
+frontend\.env
 
 # Testing & Coverage
 /coverage

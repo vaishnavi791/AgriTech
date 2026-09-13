@@ -1,82 +1,91 @@
-import { STORAGE_KEYS } from '../utils/constants';
+import api from './api';
+import { API_ENDPOINTS, STORAGE_KEYS } from '../utils/constants';
 
 /**
- * Decoupled Authentication Service Interface.
+ * Authentication Service connecting to FastAPI JWT endpoints.
  *
- * This module defines the client-side authentication contract ready for future
- * FastAPI JWT backend endpoint integration.
- *
- * It intentionally avoids hardcoding specific endpoint paths (such as /auth/login
- * or /auth/me) and avoids generating fake tokens or mock user sessions.
+ * Implements login, registration, current user profile fetching, and session management.
+ * Note: Never logs or exposes raw tokens or sensitive credentials.
  */
 export const authService = {
   /**
    * Authenticate a user with login credentials.
    *
-   * @param {Object} credentials - The user credentials.
-   * @param {string} credentials.email - The user's registered email address.
-   * @param {string} credentials.password - The user's password.
-   * @returns {Promise<Object>} Resolves with authenticated user/token payload upon backend connection.
+   * @param {Object} credentials
+   * @param {string} credentials.email - User email address
+   * @param {string} credentials.password - User password
+   * @returns {Promise<Object>} Resolves with { access_token, token_type, user }
    */
   async login(credentials) {
-    // Decoupled interface: ready for the backend contract to be defined later.
-    // Explicitly avoids fake authentication or mock sessions.
-    return new Promise((_, reject) => {
-      setTimeout(() => {
-        reject(
-          new Error(
-            'Authentication API contract is not yet connected to the backend. Live sign-in will be enabled once the FastAPI JWT endpoint is integrated.'
-          )
-        );
-      }, 500);
+    const response = await api.post(API_ENDPOINTS.AUTH.LOGIN, {
+      email: credentials.email.trim(),
+      password: credentials.password,
     });
+
+    const data = response.data;
+    if (data?.access_token) {
+      try {
+        localStorage.setItem(STORAGE_KEYS.TOKEN, data.access_token);
+        if (data.user) {
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(data.user));
+        }
+      } catch {
+        // Ignore localStorage errors
+      }
+    }
+    return data;
   },
 
   /**
    * Register a new user account.
    *
-   * @param {Object} userData - The registration data.
-   * @param {string} userData.name - Full name of the user.
-   * @param {string} userData.email - User email address.
-   * @param {string} userData.password - User password.
-   * @returns {Promise<Object>} Resolves with created user/token payload upon backend connection.
+   * @param {Object} userData
+   * @param {string} userData.email - User email address
+   * @param {string} userData.password - User password (min 8 chars)
+   * @param {string} [userData.full_name] - Optional full name
+   * @param {string} [userData.name] - Fallback name field from form
+   * @returns {Promise<Object>} Resolves with { status, message, user }
    */
   async register(userData) {
-    // Decoupled interface: ready for the backend contract to be defined later.
-    // Explicitly avoids fake registration or mock sessions.
-    return new Promise((_, reject) => {
-      setTimeout(() => {
-        reject(
-          new Error(
-            'Registration API contract is not yet connected to the backend. Account creation will be enabled once the FastAPI JWT endpoint is integrated.'
-          )
-        );
-      }, 500);
-    });
+    const payload = {
+      email: userData.email.trim(),
+      password: userData.password,
+      full_name: (userData.full_name || userData.name || '').trim() || undefined,
+    };
+
+    const response = await api.post(API_ENDPOINTS.AUTH.REGISTER, payload);
+    return response.data;
   },
 
   /**
-   * Retrieve current authenticated user profile.
+   * Retrieve current authenticated user profile from /api/auth/me.
    *
-   * @returns {Promise<Object|null>}
+   * @returns {Promise<Object|null>} Current user profile or null
    */
   async getCurrentUser() {
     const token = this.getToken();
     if (!token) return null;
 
-    // Interface ready for user profile endpoint
-    return null;
+    const response = await api.get(API_ENDPOINTS.AUTH.ME);
+    if (response.data) {
+      try {
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(response.data));
+      } catch {
+        // Ignore localStorage errors
+      }
+    }
+    return response.data;
   },
 
   /**
-   * Terminate active session and clear stored tokens.
+   * Terminate active session and clear stored credentials.
    */
   logout() {
     try {
       localStorage.removeItem(STORAGE_KEYS.TOKEN);
       localStorage.removeItem(STORAGE_KEYS.USER);
     } catch {
-      // Handle restricted environments
+      // Ignore localStorage errors
     }
   },
 
@@ -108,7 +117,7 @@ export const authService = {
   },
 
   /**
-   * Verify whether the client holds an active session.
+   * Verify whether the client holds an active token.
    *
    * @returns {boolean}
    */
