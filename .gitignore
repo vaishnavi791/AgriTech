@@ -1,12 +1,13 @@
 # =========================
 # Python / Backend
 # =========================
+backend\.env
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-backend\.env
+
 
 # Virtual environments
 .venv/
@@ -47,6 +48,7 @@ lerna-debug.log*
 # =========================
 # IDE
 # =========================
+
 .vscode/
 .idea/
 *.suo
@@ -56,7 +58,8 @@ lerna-debug.log*
 *.sw?
 
 # =========================
-# OS
+# OS generated files
 # =========================
+
 .DS_Store
 Thumbs.db
