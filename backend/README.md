@@ -194,9 +194,121 @@ Tokens contain the user identity and an expiration claim. Expired, malformed, in
 
 ---
 
+## Crop Recommendation
+
+`POST /api/crop/predict` loads `ml/crop/crop_recommendation_model.pkl` with `joblib` and calls the supplied `RandomForestClassifier`. The runtime dependency is pinned to scikit-learn `1.7.1`, matching the version recorded in the artifact warning during verification.
+
+Request body:
+
+```json
+{
+  "N": 90,
+  "P": 42,
+  "K": 43,
+  "temperature": 20.879744,
+  "humidity": 82.002744,
+  "ph": 6.502985,
+  "rainfall": 202.935536
+}
+```
+
+All seven fields are required numeric values: `N`, `P`, `K`, `temperature`, `humidity`, `ph`, and `rainfall`. The service preserves this exact feature order and passes named columns to the model.
+
+Response body:
+
+```json
+{
+  "prediction": "rice",
+  "confidence": 0.9
+}
+```
+
+`prediction` comes from `predict()`. `confidence` is the maximum value returned by `predict_proba()` and is constrained to `[0, 1]`. Missing or malformed fields return `422`. Missing, incompatible, or failing model loading/inference returns a controlled `500` response without exposing stack traces.
+
+The model is loaded lazily and cached for reuse. scikit-learn compatibility warnings are not suppressed; the dependency is pinned to the verified artifact version.
+
+---
+
 ## Database Collections & Persistence Infrastructure
 
 The persistence layer organizes data into three primary collections:
 1. `users`: User account records managed via [user_service.py](file:///c:/Users/YUKTI/Desktop/projects/agri%20tech%20final/AgriTech/backend/app/services/user_service.py) and [user.py](file:///c:/Users/YUKTI/Desktop/projects/agri%20tech%20final/AgriTech/backend/app/models/user.py). Plaintext passwords are never stored; only password hashes are persisted.
 2. `predictions`: Prediction and estimation histories across crop, disease, cost, and price modules managed via [prediction_service.py](file:///c:/Users/YUKTI/Desktop/projects/agri%20tech%20final/AgriTech/backend/app/services/prediction_service.py) and [prediction.py](file:///c:/Users/YUKTI/Desktop/projects/agri%20tech%20final/AgriTech/backend/app/models/prediction.py).
 3. `chat_messages`: Conversational context and message histories for the AI Agri Assistant managed via [chat_service.py](file:///c:/Users/YUKTI/Desktop/projects/agri%20tech%20final/AgriTech/backend/app/services/chat_service.py) and [chat.py](file:///c:/Users/YUKTI/Desktop/projects/agri%20tech%20final/AgriTech/backend/app/models/chat.py).
+
+
+
+## Cost Estimation API
+
+The Cost Estimation module provides a deterministic cultivation-cost
+calculation through the FastAPI backend.
+
+### Endpoint
+
+```text
+POST /api/cost/estimate
+
+Calculation Flow
+
+React Cost Form
+      ↓
+POST /api/cost/estimate
+      ↓
+FastAPI request validation
+      ↓
+app/routes/cost.py
+      ↓
+app/services/cost_service.py
+      ↓
+ml/cost/calculator.py
+      ↓
+Structured cost and profitability result
+      ↓
+React Cost Result UI
+
+
+
+Request Schema
+
+| Field                            | Type   | Description                                |
+| -------------------------------- | ------ | ------------------------------------------ |
+| `crop`                           | string | Crop name                                  |
+| `land_size_acres`                | float  | Cultivated area in acres                   |
+| `seed_rate_kg_per_acre`          | float  | Seed requirement per acre                  |
+| `seed_price_inr_per_kg`          | float  | Seed price per kg                          |
+| `n_rate_kg_per_acre`             | float  | Nitrogen input quantity per acre           |
+| `p_rate_kg_per_acre`             | float  | Phosphorus input quantity per acre         |
+| `k_rate_kg_per_acre`             | float  | Potassium input quantity per acre          |
+| `fertilizer_price_inr_per_kg`    | float  | Fertilizer price per kg                    |
+| `water_requirement_mm`           | float  | Crop water requirement                     |
+| `water_rate_inr_per_mm_per_acre` | float  | Water/irrigation cost rate                 |
+| `water_efficiency_factor`        | float  | Water efficiency factor; defaults to `1.0` |
+| `labor_days_per_acre`            | float  | Labour requirement per acre                |
+| `wage_inr_per_day`               | float  | Labour wage per day                        |
+| `expected_yield_kg_per_acre`     | float  | Expected yield per acre                    |
+| `market_price_inr_per_kg`        | float  | Market/mandi price per kg                  |
+| `machinery_cost_inr_per_acre`    | float  | Optional machinery cost per acre           |
+| `other_input_cost_inr_per_acre`  | float  | Optional additional input cost per acre    |
+
+Response Schema
+
+{
+  "success": true,
+  "message": "Cost estimation calculated successfully.",
+  "estimate": {
+    "crop": "Rice",
+    "land_size_acres": 2.5,
+    "breakdown": {
+      "seed": 1750,
+      "fertilizer": 2000,
+      "water": 0,
+      "labor": 25000,
+      "machinery": 0,
+      "other_inputs": 0
+    },
+    "total_cost": 28750,
+    "estimated_revenue": 125000,
+    "net_profit": 96250,
+    "roi_percent": 334.78
+  }
+}
