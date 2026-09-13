@@ -108,3 +108,7 @@ def get_predictions_collection() -> AsyncIOMotorCollection:
 def get_chat_messages_collection() -> AsyncIOMotorCollection:
     """Retrieve the 'chat_messages' MongoDB collection."""
     return get_database()["chat_messages"]
+
+def get_mandi_prices_collection() -> AsyncIOMotorCollection:
+    """Retrieve the 'mandi_prices' MongoDB collection."""
+    return get_database()["mandi_prices"]
