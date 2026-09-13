@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Lock, Mail, Eye, EyeOff, ArrowRight, Leaf } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
 import useLanguage from '../hooks/useLanguage';
@@ -10,7 +10,6 @@ export const Login = () => {
   const { login, isLoading, error, clearError } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -20,7 +19,6 @@ export const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [formError, setFormError] = useState('');
-  const [successMessage, setSuccessMessage] = useState(location.state?.successMessage || '');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,7 +36,6 @@ export const Login = () => {
     }
 
     if (formError) setFormError('');
-    if (successMessage) setSuccessMessage('');
     if (error) clearError();
   };
 
@@ -72,7 +69,6 @@ export const Login = () => {
     } catch (err) {
       // Error is captured and surfaced via AuthContext error or err.message
       setFormError(err.message || 'Unable to sign in at this time.');
-      setSuccessMessage('');
     }
   };
 
@@ -91,21 +87,6 @@ export const Login = () => {
             {t('auth.signInSubtitle')}
           </p>
         </div>
-
-        {/* Success Notice Banner */}
-        {successMessage && (
-          <div className="p-3.5 bg-agri-50 border border-agri-200 rounded-xl text-xs sm:text-sm text-agri-800 flex items-center justify-between shadow-sm">
-            <span>{successMessage}</span>
-            <button
-              type="button"
-              onClick={() => setSuccessMessage('')}
-              className="text-agri-700 hover:text-agri-900 font-bold ml-2 text-base leading-none"
-              aria-label="Dismiss message"
-            >
-              &times;
-            </button>
-          </div>
-        )}
 
         {/* Global Error Notice Banner */}
         {(formError || error) && (

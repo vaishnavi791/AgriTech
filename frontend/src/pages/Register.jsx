@@ -67,24 +67,12 @@ export const Register = () => {
     setFormError('');
 
     try {
-      const result = await register({
-        full_name: formData.name.trim(),
+      await register({
         name: formData.name.trim(),
         email: formData.email.trim(),
         password: formData.password,
       });
-
-      if (result?.autoLoggedIn) {
-        navigate('/welcome');
-      } else {
-        navigate('/login', {
-          state: {
-            successMessage:
-              t('auth.accountCreatedSuccess') ||
-              'Account created successfully! Please sign in with your credentials.',
-          },
-        });
-      }
+      navigate('/welcome');
     } catch (err) {
       setFormError(err.message || 'Unable to create account at this time.');
     }

@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initAuth = async () => {
       const storedToken = authService.getToken();
-      if (storedToken) {
+      if (storedToken && !user) {
         try {
           setIsLoading(true);
           const currentUser = await authService.getCurrentUser();
@@ -31,20 +31,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     initAuth();
-  }, []);
-
-  // Centralized listener for unauthorized token expiration/invalidation
-  useEffect(() => {
-    const handleUnauthorized = () => {
-      setToken(null);
-      setUser(null);
-    };
-
-    window.addEventListener('auth:unauthorized', handleUnauthorized);
-    return () => {
-      window.removeEventListener('auth:unauthorized', handleUnauthorized);
-    };
-  }, []);
+  }, [user]);
 
   const login = useCallback(async (credentials) => {
     setIsLoading(true);
@@ -57,11 +44,7 @@ export const AuthProvider = ({ children }) => {
       }
       return data;
     } catch (err) {
-      const msg =
-        err.response?.data?.error?.message ||
-        err.response?.data?.detail ||
-        err.message ||
-        'Login failed. Please check your credentials.';
+      const msg = err.response?.data?.detail || err.message || 'Login failed. Please check your credentials.';
       setError(msg);
       throw new Error(msg);
     } finally {
@@ -73,34 +56,14 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const regData = await authService.register(userData);
-
-      // Attempt seamless auto-login with submitted credentials
-      try {
-        const loginData = await authService.login({
-          email: userData.email,
-          password: userData.password,
-        });
-        if (loginData?.access_token) {
-          setToken(loginData.access_token);
-          const activeUser = loginData.user || regData?.user || null;
-          setUser(activeUser);
-          return { autoLoggedIn: true, user: activeUser, data: regData };
-        }
-      } catch {
-        // Auto-login failed, but registration succeeded.
-        // Clear tokens to guarantee user is not falsely authenticated.
-        setToken(null);
-        setUser(null);
+      const data = await authService.register(userData);
+      if (data?.access_token) {
+        setToken(data.access_token);
+        setUser(data.user || null);
       }
-
-      return { autoLoggedIn: false, user: regData?.user || null, data: regData };
+      return data;
     } catch (err) {
-      const msg =
-        err.response?.data?.error?.message ||
-        err.response?.data?.detail ||
-        err.message ||
-        'Registration failed. Please try again.';
+      const msg = err.response?.data?.detail || err.message || 'Registration failed. Please try again.';
       setError(msg);
       throw new Error(msg);
     } finally {

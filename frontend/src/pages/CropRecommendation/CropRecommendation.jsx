@@ -39,16 +39,14 @@ export const CropRecommendation = () => {
 
     try {
       const payload = {
-        nitrogen: parseFloat(formData.nitrogen),
-        phosphorus: parseFloat(formData.phosphorus),
-        potassium: parseFloat(formData.potassium),
+        N: parseFloat(formData.nitrogen),
+        P: parseFloat(formData.phosphorus),
+        K: parseFloat(formData.potassium),
         temperature: parseFloat(formData.temperature),
         humidity: parseFloat(formData.humidity),
         ph: parseFloat(formData.ph),
         rainfall: parseFloat(formData.rainfall),
-        soil_type: formData.soil_type,
       };
-
       const result = await cropService.getRecommendation(payload);
       setCropResult(result);
     } catch (err) {

@@ -12,7 +12,7 @@ export const API_ENDPOINTS = {
     ME: '/auth/me',
   },
   CROP: {
-    RECOMMEND: '/crop/recommend',
+    RECOMMEND: '/crop/predict',
   },
   DISEASE: {
     DETECT: '/disease/detect',

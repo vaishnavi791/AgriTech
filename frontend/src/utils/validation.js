@@ -1,6 +1,5 @@
 /**
  * Validation utilities for AgriTech forms and inputs.
- * Aligned with backend FastAPI Pydantic constraints (min_length=8 for passwords).
  */
 
 export const isValidEmail = (email) => {
@@ -11,7 +10,7 @@ export const isValidEmail = (email) => {
 
 export const isValidPassword = (password) => {
   if (!password || typeof password !== 'string') return false;
-  return password.length >= 8;
+  return password.length >= 6;
 };
 
 export const isValidName = (name) => {
@@ -36,7 +35,7 @@ export const validateLoginForm = ({ email, password }) => {
   if (!password) {
     errors.password = 'Please enter your password.';
   } else if (!isValidPassword(password)) {
-    errors.password = 'Password must be at least 8 characters long.';
+    errors.password = 'Password must be at least 6 characters long.';
   }
 
   return {
@@ -68,7 +67,7 @@ export const validateRegisterForm = ({ name, email, password, confirmPassword })
   if (!password) {
     errors.password = 'Please enter your password.';
   } else if (!isValidPassword(password)) {
-    errors.password = 'Password must be at least 8 characters long.';
+    errors.password = 'Password must be at least 6 characters long.';
   }
 
   if (!confirmPassword) {
