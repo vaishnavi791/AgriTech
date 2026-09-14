@@ -229,6 +229,56 @@ The model is loaded lazily and cached for reuse. scikit-learn compatibility warn
 
 ---
 
+## Plant Disease Detection
+
+`POST /api/disease/predict` processes uploaded plant leaf imagery using the fine-tuned MobileNetV2 disease model (`ml/disease/fine_tuned_model.h5`).
+
+### Model Architecture & Runtime
+- **Model**: MobileNetV2 base (157 layers) + `GlobalAveragePooling2D` + `Dense(128)` + `Dense(38, activation='softmax')`.
+- **Runtime Loader**: Loaded once at FastAPI startup via `tf_keras.models.load_model(..., compile=False)`.
+- **Dependencies**: `tensorflow==2.21.0`, `tf-keras==2.21.0`, `pillow==12.3.0`, `python-multipart>=0.0.9`.
+
+### Request Format
+- **HTTP Method**: `POST`
+- **Content-Type**: `multipart/form-data`
+- **Field**: `file` (binary image)
+- **Accepted MIME Types**: `image/jpeg`, `image/png`, `image/webp`
+- **Max File Size**: 10 MB
+
+### Preprocessing Pipeline
+1. In-memory Pillow decoding and conversion to RGB (`image.convert("RGB")`).
+2. Resized to `(224, 224)` via bilinear interpolation.
+3. External MobileNetV2 normalization to `[-1, 1]` via `(x / 127.5) - 1.0` (zero double-normalization risk; model contains no internal `Rescaling` layers).
+3. Kaggle notebook normalization to `[0.0, 1.0]` via `image / 255.0` (zero double-normalization risk; model contains no internal `Rescaling` layers).
+4. Expanded to batch tensor `(1, 224, 224, 3)`.
+
+### Response Schema (`200 OK`)
+```json
+{
+  "success": true,
+  "predicted_class_index": 10,
+  "prediction": null,
+  "confidence": 0.9937,
+  "message": "Inference completed successfully. Authoritative class-label mapping is pending confirmation."
+  "predicted_class_index": 1,
+  "prediction": "Apple___Black_rot",
+  "confidence": 0.9965,
+  "message": "Plant disease diagnosis completed successfully: Apple___Black_rot"
+}
+```
+- `predicted_class_index`: Integer in `[0, 37]` corresponding to the model's argmax output.
+- `prediction`: Always explicitly present with value `null` while authoritative class-label mapping is pending confirmation from the training dataset.
+- `prediction`: Authoritative plant disease label mapped directly from the source Kaggle training notebook classes.
+- `confidence`: Genuine maximum softmax probability float in `[0.0, 1.0]`.
+
+### Error Responses
+- `400 Bad Request`: Non-image file type, missing file, empty upload, or corrupted/unreadable image.
+- `413 Payload Too Large`: Image file size exceeds 10MB.
+- `503 Service Unavailable`: Disease model artifact missing or failed to load at startup.
+- `500 Internal Server Error`: Controlled error if unexpected inference failure occurs (no internal paths or stack traces exposed).
+
+---
+
 ## Database Collections & Persistence Infrastructure
 
 The persistence layer organizes data into three primary collections:

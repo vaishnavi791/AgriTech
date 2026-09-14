@@ -52,13 +52,7 @@ export const Chatbot = () => {
     setErrorMessage(null);
 
     try {
-      // Build conversation history for FastAPI context
-      const history = messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      }));
-
-      const response = await chatbotService.sendMessage(text, history);
+      const response = await chatbotService.sendMessage(text);
       
       const botReplyText = response.reply || response.response || response.message || 'I have analyzed your request.';
       const botMsg = {
@@ -69,7 +63,11 @@ export const Chatbot = () => {
       };
       setMessages((prev) => [...prev, botMsg]);
     } catch (err) {
-      const detail = err.response?.data?.detail || err.message || 'Unable to connect to AI Chatbot service.';
+      const detail =
+        err.response?.data?.message ||
+        err.response?.data?.detail ||
+        err.message ||
+        'Unable to connect to AI Chatbot service.';
       setErrorMessage(detail);
       // Append fallback notification inside chat
       const errorMsg = {

@@ -13,6 +13,7 @@ from app.core.database import (
     close_mongo_connection,
 )
 from app.routes.api import api_router
+from app.services.disease_service import disease_service
 
 # Configure structured logging
 logging.basicConfig(
@@ -27,8 +28,10 @@ async def lifespan(app: FastAPI):
     """Application lifespan context manager for startup and shutdown hooks."""
     logger.info("Starting up %s (%s environment)...", settings.PROJECT_NAME, settings.ENVIRONMENT)
     await connect_to_mongo()
+    await disease_service.load_model()
     yield
     logger.info("Shutting down %s...", settings.PROJECT_NAME)
+    await disease_service.unload_model()
     await close_mongo_connection()
 
 
@@ -44,10 +47,7 @@ app = FastAPI(
 # Configure CORS for React frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-    ],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

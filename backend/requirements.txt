@@ -12,4 +12,7 @@ google-generativeai>=0.4.0
 joblib>=1.4.2
 pandas>=2.2,<3
 scikit-learn==1.7.1
+tensorflow==2.21.0
+tf-keras==2.21.0
+pillow==12.3.0
 

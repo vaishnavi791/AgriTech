@@ -16,6 +16,7 @@ export const API_ENDPOINTS = {
   },
   DISEASE: {
     DETECT: '/disease/detect',
+    PREDICT: '/disease/predict',
   },
   COST: {
     ESTIMATE: '/cost/estimate',
@@ -25,6 +26,10 @@ export const API_ENDPOINTS = {
   },
   CHATBOT: {
     MESSAGE: '/chatbot/message',
+    CHAT: '/chatbot/chat',
+  },
+  PREDICTIONS: {
+    HISTORY: '/predictions/history',
   },
 };
 

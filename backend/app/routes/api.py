@@ -8,6 +8,7 @@ from app.routes.cost import router as cost_router
 from app.routes.price import router as price_router
 from app.routes.chatbot import router as chatbot_router
 from app.routes.mandi import router as mandi_router
+from app.routes.prediction import router as prediction_router
 
 
 api_router = APIRouter()
@@ -37,3 +38,4 @@ api_router.include_router(cost_router)
 api_router.include_router(price_router)
 api_router.include_router(chatbot_router)
 api_router.include_router(mandi_router)
+api_router.include_router(prediction_router)

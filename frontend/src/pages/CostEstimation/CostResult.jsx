@@ -8,19 +8,80 @@ import { formatCurrency } from '../../utils/validation';
 export const CostResult = ({ result, onReset }) => {
   if (!result) return null;
 
-  const totalCost = result.total_cost || result.estimated_cost || 42500;
-  const costPerAcre = result.cost_per_acre || (totalCost / (result.land_area || 1));
-  const projectedRevenue = result.projected_revenue || totalCost * 1.65;
-  const projectedProfit = result.projected_profit || (projectedRevenue - totalCost);
-  const profitMargin = result.profit_margin || ((projectedProfit / projectedRevenue) * 100).toFixed(1);
+  const data = result.estimate || result;
 
-  const breakdown = result.breakdown || [
-    { label: 'Seeds & Saplings', amount: result.seed_cost || 6000, percentage: 14 },
-    { label: 'Fertilizers & Nutrients', amount: result.fertilizer_cost || 12500, percentage: 29 },
-    { label: 'Farm Labor & Weeding', amount: result.labor_cost || 11000, percentage: 26 },
-    { label: 'Tractor & Machinery', amount: result.machinery_cost || 8000, percentage: 19 },
-    { label: 'Irrigation & Utilities', amount: result.irrigation_cost || 5000, percentage: 12 },
-  ];
+  const landArea = data.land_size_acres || data.land_area || 1;
+  const totalCost = data.total_cost ?? data.estimated_cost ?? 42500;
+  const costPerAcre = data.cost_per_acre ?? (totalCost / landArea);
+  const projectedRevenue =
+    data.estimated_revenue ??
+    data.projected_revenue ??
+    totalCost * 1.65;
+  const projectedProfit =
+    data.net_profit ??
+    data.projected_profit ??
+    (projectedRevenue - totalCost);
+
+  const profitMargin =
+    data.roi_percent != null
+      ? Number(data.roi_percent).toFixed(1)
+      : data.profit_margin ??
+        ((projectedProfit / (projectedRevenue || 1)) * 100).toFixed(1);
+
+  let breakdown = [];
+
+  if (Array.isArray(data.breakdown)) {
+    breakdown = data.breakdown;
+  } else if (data.breakdown && typeof data.breakdown === 'object') {
+    const b = data.breakdown;
+
+    const calcPct = (amount) =>
+      totalCost > 0 ? Math.round((amount / totalCost) * 100) : 0;
+
+    breakdown = [
+      {
+        label: 'Seeds & Saplings',
+        amount: b.seed ?? 0,
+        percentage: calcPct(b.seed ?? 0),
+      },
+      {
+        label: 'Fertilizers & Nutrients',
+        amount: b.fertilizer ?? 0,
+        percentage: calcPct(b.fertilizer ?? 0),
+      },
+      {
+        label: 'Farm Labor & Weeding',
+        amount: b.labor ?? 0,
+        percentage: calcPct(b.labor ?? 0),
+      },
+      {
+        label: 'Tractor & Machinery',
+        amount: b.machinery ?? 0,
+        percentage: calcPct(b.machinery ?? 0),
+      },
+      {
+        label: 'Irrigation & Utilities',
+        amount: b.water ?? 0,
+        percentage: calcPct(b.water ?? 0),
+      },
+    ];
+
+    if (b.other_inputs) {
+      breakdown.push({
+        label: 'Other Cultivation Inputs',
+        amount: b.other_inputs,
+        percentage: calcPct(b.other_inputs),
+      });
+    }
+  } else {
+    breakdown = [
+      { label: 'Seeds & Saplings', amount: 6000, percentage: 14 },
+      { label: 'Fertilizers & Nutrients', amount: 12500, percentage: 29 },
+      { label: 'Farm Labor & Weeding', amount: 11000, percentage: 26 },
+      { label: 'Tractor & Machinery', amount: 8000, percentage: 19 },
+      { label: 'Irrigation & Utilities', amount: 5000, percentage: 12 },
+    ];
+  }
 
   return (
     <PredictionCard
