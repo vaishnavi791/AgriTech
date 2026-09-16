@@ -1,38 +1,27 @@
-"""AI Agri Assistant Chatbot schemas.
-
-NOTE: All fields below are TEMPORARY / TBD and represent contract placeholders.
-Exact fields, message limits, and session structures will be established in the
-dedicated Chatbot implementation prompt.
-"""
+"""AI Agri Assistant Chatbot request and response schemas."""
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class ChatbotRequest(BaseModel):
-    status: str = Field(
-        default="TBD",
-        description="TEMPORARY/TBD: Chatbot request fields will be finalized in the Chatbot prompt.",
-    )
-    message: Optional[str] = Field(
-        default=None,
-        description="TEMPORARY/TBD: User question or message placeholder.",
-    )
+    message: str = Field(..., min_length=1, max_length=2000, description="User message")
     session_id: Optional[str] = Field(
         default=None,
-        description="TEMPORARY/TBD: Conversation session identifier placeholder.",
+        min_length=1,
+        max_length=128,
+        description="Durable application conversation session identifier",
     )
+
+    @field_validator("message")
+    @classmethod
+    def message_must_not_be_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("message must not be blank")
+        return value
 
 
 class ChatbotResponse(BaseModel):
-    status: str = Field(
-        default="TBD",
-        description="TEMPORARY/TBD: Chatbot response fields will be finalized in the Chatbot prompt.",
-    )
-    reply: Optional[str] = Field(
-        default=None,
-        description="TEMPORARY/TBD: Assistant reply placeholder.",
-    )
-    session_id: Optional[str] = Field(
-        default=None,
-        description="TEMPORARY/TBD: Active session identifier placeholder.",
-    )
+    success: bool = True
+    reply: str = Field(..., description="Assistant response")
+    session_id: str = Field(..., description="Durable application conversation session identifier")

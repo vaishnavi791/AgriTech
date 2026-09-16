@@ -8,7 +8,7 @@ python-jose[cryptography]>=3.3.0
 pwdlib[argon2]>=0.2.0
 email-validator>=2.1.0
 python-multipart>=0.0.9
-google-generativeai>=0.4.0
+google-genai==2.23.0
 joblib>=1.4.2
 pandas>=2.2,<3
 scikit-learn==1.7.1

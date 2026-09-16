@@ -194,6 +194,17 @@ Tokens contain the user identity and an expiration claim. Expired, malformed, in
 
 ---
 
+## AI Agri Assistant
+
+`POST /api/chatbot/chat` accepts a non-empty `message` and an optional application `session_id`.
+Anonymous requests remain supported. When a valid bearer token is supplied, persisted chat records are associated with that user; this endpoint does not change the authentication requirements of any existing route.
+
+The assistant uses `google-genai==2.23.0`, `gemini-3.8-flash`, and the asynchronous Gemini Interactions API. The browser keeps a durable application session ID in local storage. MongoDB remains the durable application conversation history; each assistant record stores the provider continuation identifier separately at `metadata.provider_interaction_id`.
+
+Normal turns continue with that provider identifier. If Gemini explicitly rejects the prior continuation interaction as unavailable or expired, the backend rebuilds a new provider interaction from up to ten recent MongoDB messages. Database history lookup and persistence are best-effort, so MongoDB outages do not prevent an otherwise successful assistant response. Gemini credentials are read from `GEMINI_API_KEY` and must never be logged or committed.
+
+---
+
 ## Crop Recommendation
 
 `POST /api/crop/predict` loads `ml/crop/crop_recommendation_model.pkl` with `joblib` and calls the supplied `RandomForestClassifier`. The runtime dependency is pinned to scikit-learn `1.7.1`, matching the version recorded in the artifact warning during verification.
