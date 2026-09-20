@@ -142,18 +142,27 @@ def normalize_mandi_record(record: dict[str, Any]) -> dict[str, Any]:
     )
 
     result = {
+        "state_id": _get_first(record, "state_id"),
         "crop": crop,
+        "commodity_id": _get_first(record, "commodity_id"),
+        "commodity": _get_first(record, "commodity"),
         "state": state,
+        "state_name": _get_first(record, "state_name"),
         "district": district,
         "market": market,
+        "market_name": _get_first(record, "market_name"),
         "date": date,
+        "arrival_date": _get_first(record, "arrival_date"),
+        "variety": _get_first(record, "variety", "varietyName"),
+        "grade": _get_first(record, "grade", "gradeName"),
+        "arrivals_mt": _get_first(record, "arrivals_mt"),
         "min_price_inr_per_quintal": None,
         "max_price_inr_per_quintal": None,
         "modal_price_inr_per_quintal": None,
         "min_price_inr_per_kg": None,
         "max_price_inr_per_kg": None,
         "modal_price_inr_per_kg": None,
-        "source": "AGMARKNET/data.gov.in",
+        "source": _get_first(record, "source") or "AGMARKNET",
     }
 
     if min_price is not None:

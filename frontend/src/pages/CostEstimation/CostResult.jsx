@@ -10,23 +10,14 @@ export const CostResult = ({ result, onReset }) => {
 
   const data = result.estimate || result;
 
-  const landArea = data.land_size_acres || data.land_area || 1;
-  const totalCost = data.total_cost ?? data.estimated_cost ?? 42500;
-  const costPerAcre = data.cost_per_acre ?? (totalCost / landArea);
-  const projectedRevenue =
-    data.estimated_revenue ??
-    data.projected_revenue ??
-    totalCost * 1.65;
-  const projectedProfit =
-    data.net_profit ??
-    data.projected_profit ??
-    (projectedRevenue - totalCost);
-
-  const profitMargin =
-    data.roi_percent != null
-      ? Number(data.roi_percent).toFixed(1)
-      : data.profit_margin ??
-        ((projectedProfit / (projectedRevenue || 1)) * 100).toFixed(1);
+    const landArea = data.land_size_acres;
+    const totalCost = data.total_cost;
+    const costPerAcre =
+      totalCost != null && landArea > 0 ? totalCost / landArea : null;
+    const projectedRevenue = data.estimated_revenue;
+    const projectedProfit = data.net_profit;
+    const profitMargin =
+      data.roi_percent != null ? Number(data.roi_percent).toFixed(1) : null;
 
   let breakdown = [];
 
@@ -73,14 +64,6 @@ export const CostResult = ({ result, onReset }) => {
         percentage: calcPct(b.other_inputs),
       });
     }
-  } else {
-    breakdown = [
-      { label: 'Seeds & Saplings', amount: 6000, percentage: 14 },
-      { label: 'Fertilizers & Nutrients', amount: 12500, percentage: 29 },
-      { label: 'Farm Labor & Weeding', amount: 11000, percentage: 26 },
-      { label: 'Tractor & Machinery', amount: 8000, percentage: 19 },
-      { label: 'Irrigation & Utilities', amount: 5000, percentage: 12 },
-    ];
   }
 
   return (
@@ -97,17 +80,21 @@ export const CostResult = ({ result, onReset }) => {
           <div className="p-5 bg-cream-50 border border-cream-300 rounded-xl space-y-1">
             <span className="text-xs font-semibold text-earth-muted uppercase tracking-wider">Estimated Total Cost</span>
             <div className="font-serif text-2xl font-bold text-earth-dark">
-              {formatCurrency(totalCost)}
+                {totalCost != null ? formatCurrency(totalCost) : 'Unavailable'}
             </div>
             <p className="text-[11px] text-earth-muted">
-              {formatCurrency(costPerAcre)} per acre
+                {costPerAcre != null
+                  ? `${formatCurrency(costPerAcre)} per acre`
+                  : 'No cost data returned'}
             </p>
           </div>
 
           <div className="p-5 bg-agri-50 border border-agri-200 rounded-xl space-y-1">
             <span className="text-xs font-semibold text-agri-800 uppercase tracking-wider">Projected Gross Revenue</span>
             <div className="font-serif text-2xl font-bold text-agri-900">
-              {formatCurrency(projectedRevenue)}
+                {projectedRevenue != null
+                  ? formatCurrency(projectedRevenue)
+                  : 'Unavailable'}
             </div>
             <p className="text-[11px] text-agri-700">Based on prevailing market modal rates</p>
           </div>
@@ -115,10 +102,14 @@ export const CostResult = ({ result, onReset }) => {
           <div className="p-5 bg-sage-100 border border-sage-300 rounded-xl space-y-1">
             <span className="text-xs font-semibold text-agri-900 uppercase tracking-wider">Expected Net Profit</span>
             <div className="font-serif text-2xl font-bold text-agri-900">
-              {formatCurrency(projectedProfit)}
+                {projectedProfit != null
+                  ? formatCurrency(projectedProfit)
+                  : 'Unavailable'}
             </div>
             <p className="text-[11px] text-agri-800 font-semibold">
-              ~{profitMargin}% estimated margin
+                {profitMargin != null
+                  ? `${profitMargin}% ROI from backend calculation`
+                  : 'ROI unavailable'}
             </p>
           </div>
         </div>
@@ -152,14 +143,6 @@ export const CostResult = ({ result, onReset }) => {
         </div>
 
         {/* Cost Optimization Advice */}
-        <div className="p-4 bg-cream-200/60 border border-cream-300 rounded-xl text-xs text-earth-charcoal space-y-1">
-          <span className="font-serif font-bold uppercase tracking-wider text-earth-dark">
-            Cost Optimization Insights:
-          </span>
-          <p className="leading-relaxed">
-            Fertilizer and crop protection inputs form the largest variable expenditure. Utilizing precision soil testing to calibrate nitrogen and phosphorus doses can reduce input expenses by 15-20% while preserving target yields.
-          </p>
-        </div>
       </div>
     </PredictionCard>
   );
