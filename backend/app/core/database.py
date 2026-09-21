@@ -1,6 +1,7 @@
 import logging
 from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection, AsyncIOMotorDatabase
+from pymongo import IndexModel
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -47,6 +48,18 @@ async def connect_to_mongo() -> None:
         db_manager.client = client
         db_manager.database = client[settings.DATABASE_NAME]
         db_manager.is_connected = True
+        try:
+            await db_manager.database["mandi_prices"].create_indexes(
+                [
+                    IndexModel([("crop", 1), ("state", 1), ("date", -1)]),
+                    IndexModel(
+                        [("crop", 1), ("state", 1), ("market", 1), ("date", -1)]
+                    ),
+                    IndexModel([("modal_price_inr_per_kg", 1)]),
+                ]
+            )
+        except Exception as exc:
+            logger.warning("Could not create mandi query indexes: %s", exc)
         logger.info("Successfully connected to MongoDB Atlas database: %s", settings.DATABASE_NAME)
     except Exception as exc:
         logger.warning(

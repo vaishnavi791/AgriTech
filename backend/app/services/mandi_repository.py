@@ -41,7 +41,7 @@ async def upsert_mandi_records(records: list[dict[str, Any]]) -> int:
 
 async def get_mandi_records(
     *,
-    crop: str | None = None,
+    crop: str | list[str] | None = None,
     state: str | None = None,
     market: str | None = None,
     limit: int = 5000,
@@ -55,7 +55,7 @@ async def get_mandi_records(
     query: dict[str, Any] = {}
 
     if crop:
-        query["crop"] = crop
+        query["crop"] = {"$in": crop} if isinstance(crop, list) else crop
 
     if state:
         query["state"] = state
@@ -71,3 +71,139 @@ async def get_mandi_records(
     )
 
     return await cursor.to_list(length=limit)
+
+
+async def get_available_mandi_commodities(
+    *,
+    state: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return commodities with at least one usable modal mandi price."""
+    if not db_manager.is_connected or db_manager.database is None:
+        raise RuntimeError("MongoDB is not connected")
+
+    match: dict[str, Any] = {
+        "modal_price_inr_per_kg": {"$gt": 0},
+        "crop": {"$nin": [None, ""]},
+    }
+    if state:
+        match["state"] = state
+
+    pipeline = [
+        {"$match": match},
+        {
+            "$group": {
+                "_id": "$crop",
+                "record_count": {"$sum": 1},
+                "state_count": {"$addToSet": "$state"},
+                "market_count": {"$addToSet": "$market"},
+                "latest_date": {"$max": "$date"},
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "commodity": "$_id",
+                "record_count": 1,
+                "state_count": {
+                    "$size": {
+                        "$filter": {
+                            "input": "$state_count",
+                            "as": "state",
+                            "cond": {"$ne": ["$$state", None]},
+                        }
+                    }
+                },
+                "market_count": {
+                    "$size": {
+                        "$filter": {
+                            "input": "$market_count",
+                            "as": "market",
+                            "cond": {"$ne": ["$$market", None]},
+                        }
+                    }
+                },
+                "latest_date": 1,
+            }
+        },
+        {"$sort": {"commodity": 1}},
+    ]
+    return await db_manager.database["mandi_prices"].aggregate(pipeline).to_list(None)
+
+
+async def get_available_mandi_states(
+    *,
+    crop: str | list[str] | None = None,
+) -> list[dict[str, Any]]:
+    """Return states represented by usable modal mandi records."""
+    if not db_manager.is_connected or db_manager.database is None:
+        raise RuntimeError("MongoDB is not connected")
+
+    match: dict[str, Any] = {
+        "modal_price_inr_per_kg": {"$gt": 0},
+        "state": {"$nin": [None, ""]},
+    }
+    if crop:
+        match["crop"] = {"$in": crop} if isinstance(crop, list) else crop
+
+    pipeline = [
+        {"$match": match},
+        {
+            "$group": {
+                "_id": "$state",
+                "record_count": {"$sum": 1},
+                "commodity_count": {"$addToSet": "$crop"},
+                "latest_date": {"$max": "$date"},
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "state": "$_id",
+                "record_count": 1,
+                "commodity_count": {"$size": "$commodity_count"},
+                "latest_date": 1,
+            }
+        },
+        {"$sort": {"state": 1}},
+    ]
+    return await db_manager.database["mandi_prices"].aggregate(pipeline).to_list(None)
+
+
+async def get_available_mandi_markets(
+    *,
+    crop: str | list[str] | None = None,
+    state: str | None = None,
+) -> list[dict[str, Any]]:
+    """Return markets represented by usable modal mandi records."""
+    if not db_manager.is_connected or db_manager.database is None:
+        raise RuntimeError("MongoDB is not connected")
+
+    match: dict[str, Any] = {
+        "modal_price_inr_per_kg": {"$gt": 0},
+        "market": {"$nin": [None, ""]},
+    }
+    if crop:
+        match["crop"] = {"$in": crop} if isinstance(crop, list) else crop
+    if state:
+        match["state"] = state
+
+    pipeline = [
+        {"$match": match},
+        {
+            "$group": {
+                "_id": "$market",
+                "record_count": {"$sum": 1},
+                "latest_date": {"$max": "$date"},
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "market": "$_id",
+                "record_count": 1,
+                "latest_date": 1,
+            }
+        },
+        {"$sort": {"market": 1}},
+    ]
+    return await db_manager.database["mandi_prices"].aggregate(pipeline).to_list(None)

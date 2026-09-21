@@ -2,6 +2,26 @@ import api from './api';
 import { API_ENDPOINTS } from '../utils/constants';
 
 export const costService = {
+  async getAvailableCommodities(state = null) {
+    const params = new URLSearchParams();
+    if (state) params.append('state', state);
+    const response = await api.get(`/mandi/commodities?${params.toString()}`);
+    return response.data;
+  },
+
+  async getAvailableStates(crop = null) {
+    const params = new URLSearchParams();
+    if (crop) params.append('crop', crop);
+    const response = await api.get(`/mandi/states?${params.toString()}`);
+    return response.data;
+  },
+
+  async getAvailableMarkets(crop, state) {
+    const params = new URLSearchParams({ crop, state });
+    const response = await api.get(`/mandi/available-markets?${params.toString()}`);
+    return response.data;
+  },
+
   async estimateCost(params) {
     const response = await api.post(API_ENDPOINTS.COST.ESTIMATE, params);
     return response.data;
