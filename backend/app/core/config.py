@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     # Gemini API configuration (reserved for future chatbot implementation)
     GEMINI_API_KEY: str = ""
 
+    # External SLUSI GeoJSONL file. It remains outside this repository.
+    SLUSI_SOIL_DATASET_PATH: str = ""
+
     model_config = SettingsConfigDict(
         env_file=str(ENV_FILE) if ENV_FILE.exists() else None,
         env_file_encoding="utf-8",
