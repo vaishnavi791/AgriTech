@@ -1,9 +1,14 @@
+// src/utils/constants.js
+import districts from '../data/districts.json';
+
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
 export const STORAGE_KEYS = {
   TOKEN: 'agritech_token',
   USER: 'agritech_user',
 };
+
+export const SEASONS = ['Kharif', 'Rabi'];
 
 export const API_ENDPOINTS = {
   AUTH: {
@@ -31,7 +36,16 @@ export const API_ENDPOINTS = {
   PREDICTIONS: {
     HISTORY: '/predictions/history',
   },
+  SOIL: {
+  MODEL_INPUTS: '/soil/model-inputs',
+  MODEL_INPUTS_BY_DISTRICT: '/soil/model-inputs-by-district',
+  },
+  APY: {
+    CANDIDATES: '/apy/candidates',
+  },
 };
+
+export const UP_DISTRICTS = districts;
 
 export const SOIL_TYPES = [
   'Alluvial Soil',
@@ -120,4 +134,3 @@ export const PRIORITY_FEATURES = [
     color: 'bg-agri-50 text-agri-800 border-agri-200',
   },
 ];
-

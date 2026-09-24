@@ -61,17 +61,143 @@ class SoilGeoJsonlLookup:
 
 
 def lookup_nearest_soil(latitude: float, longitude: float) -> dict[str, Any]:
-    """Look up soil using the configured ``SLUSI_SOIL_DATASET_PATH``."""
-    # Import lazily so this standalone streaming utility remains usable by
-    # maintenance scripts without loading the FastAPI settings dependencies.
-    from app.core.config import settings
+    """Look up soil using the configured ``SLUSI_SOIL_DATASET_PATH``.
 
-    if not settings.SLUSI_SOIL_DATASET_PATH.strip():
+    This implementation first tries to use a pre-built KD‑Tree index stored in
+    ``soil_index.npz`` (located alongside the GeoJSONL dataset). If the index is
+    missing or any error occurs, it falls back to the original streaming
+    ``SoilGeoJsonlLookup`` implementation.
+    """
+    import os
+    import numpy as np
+    from scipy.spatial import cKDTree
+
+    dataset_path = os.getenv("SLUSI_SOIL_DATASET_PATH", "").strip()
+    if not dataset_path:
         raise SoilLookupError("SLUSI_SOIL_DATASET_PATH is not configured.")
-    return SoilGeoJsonlLookup(settings.SLUSI_SOIL_DATASET_PATH).find_nearest(
+
+    try:
+        # Resolve index path – same directory, named soil_index.npz
+        index_path = Path(dataset_path).with_name("soil_index.npz")
+        if not index_path.is_file():
+            raise FileNotFoundError
+        # Load the index (coords: Nx2 float32, offsets: N int64)
+        index_data = np.load(index_path)
+        coords = index_data["coords"]  # shape (N, 2)
+        offsets = index_data["offsets"]  # shape (N,)
+        # Build KD‑Tree (Euclidean in degree space)
+        tree = cKDTree(coords)
+        # Query the nearest point
+        dist_deg, idx = tree.query([latitude, longitude], k=1)
+        nearest_lat, nearest_lon = coords[idx]
+        # Convert Euclidean degree distance to haversine km for the API response
+        distance_km = _haversine_km(latitude, longitude, nearest_lat, nearest_lon)
+        # Retrieve the original line from the GeoJSONL file using the byte offset
+        with open(dataset_path, "rb") as f:
+            f.seek(int(offsets[idx]))
+            line_bytes = f.readline()
+        line = line_bytes.decode("utf-8", errors="replace")
+        record = _soil_record(_parse_line(line))
+        if record is None:
+            raise SoilLookupError("Failed to parse soil record from indexed line.")
+        record["distance_km"] = distance_km
+        return record
+    except Exception:
+        # Any problem (missing index, corrupted file, etc.) → fallback to streaming
+        return SoilGeoJsonlLookup(dataset_path).find_nearest(latitude, longitude)
+
+    """Look up soil using the configured ``SLUSI_SOIL_DATASET_PATH``."""
+    import os
+    dataset_path = os.getenv("SLUSI_SOIL_DATASET_PATH", "").strip()
+    if not dataset_path:
+        raise SoilLookupError("SLUSI_SOIL_DATASET_PATH is not configured.")
+    return SoilGeoJsonlLookup(dataset_path).find_nearest(
         latitude, longitude
     )
+def lookup_soil_by_district(
+    state: str,
+    district: str,
+) -> dict[str, Any]:
+    """Return representative soil values from the precomputed district dataset."""
 
+    import json
+
+    normalized_state = _normalized_location_text(state, "state")
+    normalized_district = _normalized_location_text(district, "district")
+
+    if normalized_state != "uttar pradesh":
+        raise SoilLookupError(
+            "The current soil recommendation dataset only supports Uttar Pradesh."
+        )
+
+    dataset_path = (
+        Path(__file__).resolve().parents[2]
+        / "data"
+        / "soil"
+        / "up_district_soil.json"
+    )
+
+    if not dataset_path.is_file():
+        raise SoilLookupError(
+            f"UP district soil dataset was not found: {dataset_path}"
+        )
+
+    try:
+        with dataset_path.open("r", encoding="utf-8") as source:
+            districts = json.load(source)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SoilLookupError(
+            f"Unable to read UP district soil dataset: {exc}"
+        ) from exc
+
+
+
+    district_aliases = {
+    "prayagraj": "allahabad",
+    }
+
+    lookup_name = district_aliases.get(
+        normalized_district,
+        normalized_district,
+    )
+
+    district_data = None
+
+    for name, values in districts.items():
+        if name.strip().casefold() == lookup_name:
+            district_data = values
+            break
+
+    if district_data is None:
+        raise SoilLookupError(
+            f"No soil data found for {state.strip()} / {district.strip()}."
+        )
+
+    return {
+        "state": "Uttar Pradesh",
+        "district": district.strip(),
+        "record_count": district_data.get("record_count", 0),
+        "N": district_data.get("N"),
+        "P": district_data.get("P"),
+        "K": district_data.get("K"),
+        "ph": district_data.get("ph"),
+    }
+
+
+def _normalized_location_text(value: Any, field: str) -> str:
+    normalized = _normalized_location_value(value)
+
+    if not normalized:
+        raise SoilLookupError(f"{field.capitalize()} is required.")
+
+    return normalized
+
+
+def _normalized_location_value(value: Any) -> str:
+    if value is None:
+        return ""
+
+    return str(value).strip().casefold()
 
 def _parse_line(line: str) -> Optional[dict[str, Any]]:
     if not line.strip():

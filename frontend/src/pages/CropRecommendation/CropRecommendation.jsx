@@ -5,7 +5,9 @@ import usePrediction from '../../hooks/usePrediction';
 import ErrorMessage from '../../components/ErrorMessage';
 import Loading from '../../components/Loading';
 import CropResult from './CropResult';
-import { SOIL_TYPES } from '../../utils/constants';
+import { SOIL_TYPES, SEASONS, UP_DISTRICTS } from '../../utils/constants';
+import soilService from '../../services/soilService';
+import apyService from '../../services/apyService';
 
 export const CropRecommendation = () => {
   const { cropResult, setCropResult } = usePrediction();
@@ -21,7 +23,12 @@ export const CropRecommendation = () => {
     soil_type: SOIL_TYPES[0],
   });
 
+  const [district, setDistrict] = useState('');
+  const [season, setSeason] = useState(SEASONS[0]);
   const [isLoading, setIsLoading] = useState(false);
+
+
+
   const [errorMessage, setErrorMessage] = useState(null);
 
   const handleChange = (e) => {
@@ -34,23 +41,79 @@ export const CropRecommendation = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setIsLoading(true);
     setErrorMessage(null);
 
+    let soilData = null;
+
+    // Fetch representative soil values using selected UP district
+    if (district) {
+      try {
+        soilData = await soilService.getModelInputsByDistrict({
+          state: 'Uttar Pradesh',
+          district,
+        });
+
+        // Update displayed soil values with district data
+        setFormData((prev) => ({
+          ...prev,
+          nitrogen: String(soilData.N ?? prev.nitrogen),
+          phosphorus: String(soilData.P ?? prev.phosphorus),
+          potassium: String(soilData.K ?? prev.potassium),
+          ph: soilData.ph != null
+              ? Number(soilData.ph).toFixed(1)
+              : prev.ph,
+        }));
+      } catch (err) {
+        console.warn('District soil service failed:', err);
+        // Continue with manually entered soil values as fallback
+      }
+    }
+
+    const payload = {
+      N: soilData?.N ?? parseFloat(formData.nitrogen),
+      P: soilData?.P ?? parseFloat(formData.phosphorus),
+      K: soilData?.K ?? parseFloat(formData.potassium),
+      temperature: parseFloat(formData.temperature),
+      humidity: parseFloat(formData.humidity),
+      ph: soilData?.ph ?? parseFloat(formData.ph),
+      rainfall: parseFloat(formData.rainfall),
+    };
+
+    // Fetch APY historical crop candidates
+    let apyCandidates = [];
+
+    if (district && season) {
+      try {
+        const apyResp = await apyService.getCandidates({
+          district,
+          season,
+        });
+
+        apyCandidates = apyResp?.candidates ?? [];
+      } catch (err) {
+        console.warn('APY service failed:', err);
+      }
+    }
+
     try {
-      const payload = {
-        N: parseFloat(formData.nitrogen),
-        P: parseFloat(formData.phosphorus),
-        K: parseFloat(formData.potassium),
-        temperature: parseFloat(formData.temperature),
-        humidity: parseFloat(formData.humidity),
-        ph: parseFloat(formData.ph),
-        rainfall: parseFloat(formData.rainfall),
-      };
       const result = await cropService.getRecommendation(payload);
-      setCropResult(result);
+
+      const enrichedResult = {
+        ...result,
+        apyCandidates,
+        district,
+        season,
+      };
+
+      setCropResult(enrichedResult);
     } catch (err) {
-      const msg = err.response?.data?.detail || err.message || 'Failed to obtain crop recommendation. Please check backend status.';
+      const msg =
+        err.response?.data?.detail ||
+        err.message ||
+        'Failed to obtain crop recommendation. Please check backend status.';
+
       setErrorMessage(msg);
     } finally {
       setIsLoading(false);
@@ -162,6 +225,42 @@ export const CropRecommendation = () => {
                   className="w-full px-3.5 py-2 text-sm bg-cream-50/50 border border-cream-300 rounded-lg text-earth-dark focus:ring-2 focus:ring-agri-600 focus:border-agri-600 outline-none transition"
                 />
               </div>
+              {/* District and Season Selection */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-4">
+                <div>
+                  <label className="block text-xs font-semibold text-earth-dark mb-1 tracking-wider uppercase">
+                    District (Uttar Pradesh)
+                  </label>
+                  <select
+                    name="district"
+                    value={district}
+                    onChange={(e) => setDistrict(e.target.value)}
+                    className="w-full px-3.5 py-2 text-sm bg-cream-50/50 border border-cream-300 rounded-lg text-earth-dark focus:ring-2 focus:ring-agri-600 focus:border-agri-600 outline-none transition"
+                  >
+                    <option value="" disabled>Select district</option>
+                    {UP_DISTRICTS.map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-earth-dark mb-1 tracking-wider uppercase">
+                    Season
+                  </label>
+                  <select
+                    name="season"
+                    value={season}
+                    onChange={(e) => setSeason(e.target.value)}
+                    className="w-full px-3.5 py-2 text-sm bg-cream-50/50 border border-cream-300 rounded-lg text-earth-dark focus:ring-2 focus:ring-agri-600 focus:border-agri-600 outline-none transition"
+                  >
+                    {SEASONS.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+
 
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 tracking-wider uppercase">
@@ -180,7 +279,7 @@ export const CropRecommendation = () => {
                   ))}
                 </select>
               </div>
-            </div>
+    </div>
 
             <div className="border-b border-cream-200 pt-3 pb-3.5">
               <h3 className="font-serif text-sm font-bold uppercase tracking-wider text-agri-800">

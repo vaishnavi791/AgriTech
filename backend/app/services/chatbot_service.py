@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 from google import genai
+import google.generativeai as genai
 
 from app.core.config import settings
 from app.services.chat_service import (

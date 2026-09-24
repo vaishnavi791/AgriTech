@@ -78,6 +78,22 @@ export const CropResult = ({ result, onReset }) => {
             <li>Maintain regular basal fertilizer application in accordance with the measured N-P-K levels.</li>
             <li>Monitor weekly for common regional pests during active flowering.</li>
           </ul>
+          {/* APY Historical Evidence */}
+          {result.apyCandidates && result.apyCandidates.length > 0 && (
+            <div className="mt-6">
+              <h4 className="font-serif text-sm font-bold text-earth-dark flex items-center space-x-2 mb-2">
+                Historical APY Evidence
+              </h4>
+              <ul className="list-disc list-inside text-xs text-earth-muted space-y-1">
+                {result.apyCandidates.map((c, idx) => (
+                  <li key={idx}>
+                    <strong>{c.crop_name}</strong> – Avg Yield: {c.average_yield} (Area: {c.average_area} ha, Production: {c.average_production} tons) – Recent Year: {c.most_recent_year} – Evidence Rank: {c.historical_evidence_rank}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
         </div>
       </div>
     </PredictionCard>
