@@ -27,7 +27,7 @@ backend/
 │   │   ├── crop.py          # Crop recommendation route module contract
 │   │   ├── disease.py       # Disease detection route module contract
 │   │   ├── cost.py          # Cost estimation route module contract
-│   │   ├── price.py         # Price forecasting route module contract
+│   │   ├── price.py         # Price forecasting API
 │   │   └── chatbot.py       # Chatbot route module contract
 │   ├── schemas/
 │   │   ├── health.py        # Health response Pydantic schema
@@ -37,7 +37,7 @@ backend/
 │   │   ├── crop.py          # Crop recommendation contract schemas (TBD)
 │   │   ├── disease.py       # Disease detection contract schemas (TBD)
 │   │   ├── cost.py          # Cost estimation contract schemas (TBD)
-│   │   └── price.py         # Price forecasting contract schemas (TBD)
+│   │   └── price.py         # Price forecasting request/response schemas
 │   ├── models/
 │   │   ├── user.py          # UserDocument database document model
 │   │   ├── prediction.py    # PredictionDocument database document model
@@ -51,7 +51,7 @@ backend/
 │   │   ├── crop_service.py       # Crop service placeholder
 │   │   ├── disease_service.py    # Disease service placeholder
 │   │   ├── cost_service.py       # Cost service placeholder
-│   │   └── price_service.py      # Price service placeholder
+│   │   └── price_service.py      # Mandi price trend forecast
 │   └── utils/
 │       └── helpers.py       # Helper utilities (serialization, timestamps)
 ├── .env.example             # Example environment variables
@@ -289,6 +289,39 @@ The model is loaded lazily and cached for reuse. scikit-learn compatibility warn
 - `500 Internal Server Error`: Controlled error if unexpected inference failure occurs (no internal paths or stack traces exposed).
 
 ---
+
+## Mandi Price Forecasting API
+
+`POST /api/price/forecast` projects prices from the latest stored daily modal
+prices in MongoDB's `mandi_prices` collection. It uses ordinary least-squares
+linear regression over up to the latest 30 distinct daily observations. This is
+a transparent statistical baseline, not a trained machine-learning or seasonal
+model. When no market is specified, records are reduced to a daily median
+across matching markets; otherwise only the requested market is used.
+
+Request:
+
+```json
+{
+  "commodity": "Cotton",
+  "state": "Andhra Pradesh",
+  "market": "Adoni APMC",
+  "days_ahead": 15
+}
+```
+
+`market` is optional. `days_ahead` must be between 7 and 30. The response
+includes the latest observed price, horizon-end trend estimate, percentage
+change, source, observation count, observed date, and chart series. Prices in
+the forecast response and chart are in INR per quintal; stored modal prices are
+normalized to INR per kilogram.
+
+At least three distinct observation dates with valid modal prices are required.
+The projection starts after the last recorded mandi date, not the current
+calendar date. If the last record is more than 30 days old, the response flags
+the data as stale and includes a warning. The chart's indicative range is
+derived from regression residual error and is not a formal confidence interval.
+No recommendation to hold or sell is generated.
 
 ## Database Collections & Persistence Infrastructure
 

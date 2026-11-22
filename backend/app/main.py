@@ -132,4 +132,3 @@ async def root():
 
 # Mount the top-level /api router
 app.include_router(api_router, prefix=settings.API_PREFIX)
-

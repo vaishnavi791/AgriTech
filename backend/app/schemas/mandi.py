@@ -50,3 +50,4 @@ class VolatilityResponse(BaseModel):
     mean_price_inr_per_kg: float | None = None
     standard_deviation_inr_per_kg: float | None = None
     coefficient_of_variation_percent: float | None = None
+
