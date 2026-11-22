@@ -15,6 +15,22 @@ from statistics import mean, stdev
 from typing import Any
 
 
+CROP_ALIASES = {
+    "Rice / Paddy": ("Rice", "Paddy(Common)", "Paddy(Basmati)"),
+    "Soybean": ("Soyabean", "Soybean"),
+    "Gram / Chickpea": (
+        "Bengal Gram(Gram)(Whole)",
+        "Kabuli Chana(Chickpeas-White)",
+    ),
+    "Tur / Pigeon Pea": ("Red gram/Arhar/Tur(whole)",),
+}
+
+
+def crop_variants(crop: str) -> tuple[str, ...]:
+    """Return the requested website label and known AGMARKNET labels."""
+    return (crop, *CROP_ALIASES.get(crop, ()))
+
+
 def _valid_price(value: Any) -> float | None:
     """Return a positive numeric price or None."""
     if value in (None, ""):
@@ -42,7 +58,9 @@ def _matches(
 ) -> bool:
     """Check optional crop/state/market filters."""
 
-    if crop and str(record.get("crop", "")).lower() != crop.lower():
+    if crop and str(record.get("crop", "")).casefold() not in {
+        name.casefold() for name in crop_variants(crop)
+    }:
         return False
 
     if state and str(record.get("state", "")).lower() != state.lower():

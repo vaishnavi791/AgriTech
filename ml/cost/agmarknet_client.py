@@ -13,6 +13,7 @@ headers because the API may reject naive server-side requests.
 from __future__ import annotations
 
 import os
+import time
 from typing import Any, Iterable
 
 import requests
@@ -28,6 +29,8 @@ class AgmarknetClient:
         base_url: str | None = None,
         timeout: int = 30,
         session: requests.Session | None = None,
+        max_retries: int = 3,
+        backoff_factor: float = 1.0,
     ) -> None:
         self.base_url = (
             base_url
@@ -35,6 +38,8 @@ class AgmarknetClient:
             or "https://api.agmarknet.gov.in/v1"
         ).rstrip("/")
         self.timeout = timeout
+        self.max_retries = max(0, max_retries)
+        self.backoff_factor = max(0.0, backoff_factor)
         self.session = session or requests.Session()
         self.session.headers.update(
             {
@@ -59,22 +64,44 @@ class AgmarknetClient:
         expect_binary: bool = False,
     ) -> Any:
         url = f"{self.base_url}/{path.lstrip('/')}"
-        try:
-            response = self.session.request(
-                method,
-                url,
-                params=params,
-                json=json_body,
-                timeout=self.timeout,
-            )
-        except requests.RequestException as exc:
-            raise AgmarknetError(f"AGMARKNET request failed: {exc}") from exc
+        retryable_statuses = {502, 503, 504}
 
-        if not response.ok:
-            raise AgmarknetError(
-                f"AGMARKNET request failed: HTTP {response.status_code} "
-                f"{response.text[:500]}"
-            )
+        for attempt in range(self.max_retries + 1):
+            try:
+                response = self.session.request(
+                    method,
+                    url,
+                    params=params,
+                    json=json_body,
+                    timeout=self.timeout,
+                )
+            except (requests.ConnectTimeout, requests.ReadTimeout) as exc:
+                if attempt >= self.max_retries:
+                    raise AgmarknetError(
+                        f"AGMARKNET request failed after {self.max_retries} retries: {exc}"
+                    ) from exc
+                time.sleep(self.backoff_factor * (2**attempt))
+                continue
+            except requests.RequestException as exc:
+                raise AgmarknetError(f"AGMARKNET request failed: {exc}") from exc
+
+            if response.status_code in retryable_statuses:
+                if attempt >= self.max_retries:
+                    raise AgmarknetError(
+                        "AGMARKNET request failed after "
+                        f"{self.max_retries} retries: HTTP {response.status_code} "
+                        f"{response.text[:500]}"
+                    )
+                time.sleep(self.backoff_factor * (2**attempt))
+                continue
+
+            if not response.ok:
+                raise AgmarknetError(
+                    f"AGMARKNET request failed: HTTP {response.status_code} "
+                    f"{response.text[:500]}"
+                )
+
+            break
 
         if expect_binary:
             return {

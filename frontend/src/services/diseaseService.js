@@ -10,14 +10,18 @@ export const diseaseService = {
     const formData = new FormData();
     formData.append('file', imageFile);
 
-    const response = await api.post(API_ENDPOINTS.DISEASE.DETECT, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await api.post(
+      API_ENDPOINTS.DISEASE.PREDICT,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+
     return response.data;
   },
 };
 
 export default diseaseService;
-

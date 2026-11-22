@@ -7,7 +7,7 @@ from app.services.crop_service import CropModelError, predict_crop as predict_cr
 
 router = APIRouter(prefix="/crop", tags=["Crop Recommendation"])
 
-
+# That decorator tells FastAPI which HTTP method and path the function handles.
 @router.post(
     "/predict",
     summary="Predict recommended crops based on agricultural conditions",

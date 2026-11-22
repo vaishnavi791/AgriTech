@@ -1,11 +1,19 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Leaf } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher';
+import AuthContext from '../context/AuthContext';
 
 export const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, logout } = useContext(AuthContext);
   const isLanding = location.pathname === '/';
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   return (
     <header
@@ -28,6 +36,7 @@ export const Navbar = () => {
             >
               <Leaf className="w-5 h-5" />
             </div>
+
             <span
               className={`font-serif text-xl sm:text-2xl font-bold tracking-tight transition-colors ${
                 isLanding ? 'text-white' : 'text-earth-dark'
@@ -37,9 +46,26 @@ export const Navbar = () => {
             </span>
           </Link>
 
-          {/* The ONLY navigation control: English / हिंदी language switch */}
-          <div className="flex items-center">
-            <LanguageSwitcher size="sm" variant={isLanding ? 'glass' : 'light'} />
+          {/* Navigation controls */}
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher
+              size="sm"
+              variant={isLanding ? 'glass' : 'light'}
+            />
+
+            {isAuthenticated && (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className={`px-3 py-2 text-sm font-semibold rounded-lg transition ${
+                  isLanding
+                    ? 'text-white border border-white/25 hover:bg-white/15'
+                    : 'text-earth-dark border border-cream-300 hover:bg-cream-100'
+                }`}
+              >
+                Logout
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -4,7 +4,20 @@ import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import chatbotService from '../../services/chatbotService';
 
+const CHATBOT_SESSION_STORAGE_KEY = 'agritech_chatbot_session_id';
+
+const getOrCreateChatSessionId = () => {
+  const existing = window.localStorage.getItem(CHATBOT_SESSION_STORAGE_KEY);
+  if (existing) return existing;
+
+  const newSessionId = window.crypto?.randomUUID?.()
+    || `chat-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  window.localStorage.setItem(CHATBOT_SESSION_STORAGE_KEY, newSessionId);
+  return newSessionId;
+};
+
 export const Chatbot = () => {
+  const [sessionId, setSessionId] = useState(getOrCreateChatSessionId);
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
@@ -52,13 +65,11 @@ export const Chatbot = () => {
     setErrorMessage(null);
 
     try {
-      // Build conversation history for FastAPI context
-      const history = messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-      }));
-
-      const response = await chatbotService.sendMessage(text, history);
+      const response = await chatbotService.sendMessage(text, sessionId);
+      if (response.session_id && response.session_id !== sessionId) {
+        window.localStorage.setItem(CHATBOT_SESSION_STORAGE_KEY, response.session_id);
+        setSessionId(response.session_id);
+      }
       
       const botReplyText = response.reply || response.response || response.message || 'I have analyzed your request.';
       const botMsg = {
@@ -69,7 +80,11 @@ export const Chatbot = () => {
       };
       setMessages((prev) => [...prev, botMsg]);
     } catch (err) {
-      const detail = err.response?.data?.detail || err.message || 'Unable to connect to AI Chatbot service.';
+      const detail =
+        err.response?.data?.message ||
+        err.response?.data?.detail ||
+        err.message ||
+        'Unable to connect to AI Chatbot service.';
       setErrorMessage(detail);
       // Append fallback notification inside chat
       const errorMsg = {

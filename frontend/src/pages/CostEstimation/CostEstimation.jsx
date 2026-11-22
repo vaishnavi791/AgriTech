@@ -5,14 +5,14 @@ import usePrediction from '../../hooks/usePrediction';
 import ErrorMessage from '../../components/ErrorMessage';
 import Loading from '../../components/Loading';
 import CostResult from './CostResult';
-import { COMMODITIES_LIST, STATES_LIST } from '../../utils/constants';
 
-export const CostEstimation = () => {
+export const CostEstimation = ({ initialCrop = null }) => {
   const { costResult, setCostResult } = usePrediction();
 
   const [formData, setFormData] = useState({
-    crop: COMMODITIES_LIST[0],
-    state: 'Uttar Pradesh',
+    crop: '',
+    state: '',
+    market: '',
     land_size_acres: '2.5',
     seed_rate_kg_per_acre: '',
     seed_price_inr_per_kg: '',
@@ -33,8 +33,80 @@ export const CostEstimation = () => {
 
   const [mandiPrice, setMandiPrice] = useState(null);
   const [mandiLoading, setMandiLoading] = useState(false);
+  const [metadataLoading, setMetadataLoading] = useState(true);
+  const [availableCommodities, setAvailableCommodities] = useState([]);
+  const [availableStates, setAvailableStates] = useState([]);
+  const [availableMarkets, setAvailableMarkets] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+
+  useEffect(() => {
+    const loadCommodities = async () => {
+      try {
+        const commodities = await costService.getAvailableCommodities();
+        setAvailableCommodities(commodities);
+        const preferredCrop = initialCrop && commodities.some(
+          (item) => item.commodity === initialCrop
+        )
+          ? initialCrop
+          : commodities[0]?.commodity || '';
+        setFormData((current) => ({ ...current, crop: preferredCrop }));
+      } catch (err) {
+        setErrorMessage(
+          err.response?.data?.detail ||
+            'No verified AGMARKNET commodities are currently available.'
+        );
+      } finally {
+        setMetadataLoading(false);
+      }
+    };
+
+    loadCommodities();
+  }, [initialCrop]);
+
+  useEffect(() => {
+    if (!formData.crop) return;
+
+    const loadStates = async () => {
+      try {
+        const states = await costService.getAvailableStates(formData.crop);
+        setAvailableStates(states);
+        setFormData((current) => ({
+          ...current,
+          state: states.some((item) => item.state === current.state)
+            ? current.state
+            : states[0]?.state || '',
+          market: '',
+        }));
+      } catch (err) {
+        setAvailableStates([]);
+        setErrorMessage(
+          err.response?.data?.detail ||
+            `No verified states are currently available for ${formData.crop}.`
+        );
+      }
+    };
+
+    loadStates();
+  }, [formData.crop]);
+
+  useEffect(() => {
+    if (!formData.crop || !formData.state) return;
+
+    const loadMarkets = async () => {
+      try {
+        const markets = await costService.getAvailableMarkets(
+          formData.crop,
+          formData.state
+        );
+        setAvailableMarkets(markets);
+      } catch {
+        setAvailableMarkets([]);
+      }
+    };
+
+    loadMarkets();
+  }, [formData.crop, formData.state]);
 
   useEffect(() => {
     const fetchMandiPrice = async () => {
@@ -42,9 +114,12 @@ export const CostEstimation = () => {
       setErrorMessage(null);
 
       try {
+        if (!formData.crop || !formData.state) return;
+
         const data = await costService.getLatestMandiPrice(
           formData.crop,
-          formData.state
+          formData.state,
+          formData.market || null
         );
 
         setMandiPrice(data);
@@ -72,7 +147,7 @@ export const CostEstimation = () => {
     };
 
     fetchMandiPrice();
-  }, [formData.crop, formData.state]);
+  }, [formData.crop, formData.state, formData.market]);
 
   const handleChange = (e) => {
     setFormData({
@@ -181,6 +256,8 @@ export const CostEstimation = () => {
 
       {costResult ? (
         <CostResult result={costResult} onReset={handleReset} />
+      ) : metadataLoading ? (
+        <Loading message="Loading verified AGMARKNET commodities..." />
       ) : (
         <div className="bg-white rounded-xl shadow-card border border-cream-300 p-6 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-7">
@@ -191,7 +268,7 @@ export const CostEstimation = () => {
               </h3>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
                   Crop
@@ -203,9 +280,9 @@ export const CostEstimation = () => {
                   onChange={handleChange}
                   className={inputClass}
                 >
-                  {COMMODITIES_LIST.map((crop) => (
-                    <option key={crop} value={crop}>
-                      {crop}
+                  {availableCommodities.map((item) => (
+                    <option key={item.commodity} value={item.commodity}>
+                      {item.commodity}
                     </option>
                   ))}
                 </select>
@@ -222,9 +299,28 @@ export const CostEstimation = () => {
                   onChange={handleChange}
                   className={inputClass}
                 >
-                  {STATES_LIST.map((state) => (
-                    <option key={state} value={state}>
-                      {state}
+                  {availableStates.map((item) => (
+                    <option key={item.state} value={item.state}>
+                      {item.state}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
+                  Mandi / Market
+                </label>
+                <select
+                  name="market"
+                  value={formData.market}
+                  onChange={handleChange}
+                  className={inputClass}
+                >
+                  <option value="">All available markets</option>
+                  {availableMarkets.map((item) => (
+                    <option key={item.market} value={item.market}>
+                      {item.market}
                     </option>
                   ))}
                 </select>

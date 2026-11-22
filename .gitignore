@@ -60,3 +60,4 @@ lerna-debug.log*
 
 .DS_Store
 Thumbs.db
+soil_index.npz

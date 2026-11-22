@@ -63,3 +63,16 @@ async def get_current_user(
 		raise _authentication_error("Authenticated user was not found")
 	return user
 
+
+async def get_optional_current_user(
+	credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> Dict[str, Any] | None:
+	"""Return a valid authenticated user, while allowing anonymous access.
+
+	This is separate from ``get_current_user`` so existing protected routes keep
+	their current authentication behaviour.
+	"""
+	if credentials is None:
+		return None
+	return await get_current_user(credentials)
+

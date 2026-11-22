@@ -40,6 +40,36 @@ async def get_session_messages(
     return [serialize_mongo_doc(doc) for doc in documents]
 
 
+async def get_recent_session_messages(
+    session_id: str,
+    limit: int = 10,
+) -> List[Dict[str, Any]]:
+    """Return the latest session records in chronological order for recovery."""
+    collection = get_chat_messages_collection()
+    cursor = collection.find({"session_id": session_id}).sort("created_at", -1).limit(limit)
+    documents = await cursor.to_list(length=limit)
+    documents.reverse()
+    return [serialize_mongo_doc(doc) for doc in documents]
+
+
+async def get_latest_provider_interaction_id(session_id: str) -> Optional[str]:
+    """Find the latest persisted Gemini continuation identifier for a session."""
+    collection = get_chat_messages_collection()
+    document = await collection.find_one(
+        {
+            "session_id": session_id,
+            "role": "assistant",
+            "metadata.provider_interaction_id": {"$type": "string", "$ne": ""},
+        },
+        sort=[("created_at", -1)],
+    )
+    if not document:
+        return None
+    metadata = document.get("metadata") or {}
+    interaction_id = metadata.get("provider_interaction_id")
+    return interaction_id if isinstance(interaction_id, str) and interaction_id else None
+
+
 async def get_user_sessions(user_id: str) -> List[str]:
     """Retrieves a list of distinct session IDs associated with a user."""
     collection = get_chat_messages_collection()

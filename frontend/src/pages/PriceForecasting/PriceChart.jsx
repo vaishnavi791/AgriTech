@@ -37,9 +37,9 @@ export const PriceChart = ({ forecastData, commodity = 'Crop' }) => {
     labels: forecastData.dates,
     datasets: [
       {
-        label: 'Forecasted Modal Price (₹/Quintal)',
+        label: 'Observed / projected modal price (₹/Quintal)',
         data: forecastData.prices,
-        fill: true,
+        fill: false,
         borderColor: '#2F5D50',
         backgroundColor: 'rgba(47, 93, 80, 0.08)',
         tension: 0.35,
@@ -52,13 +52,26 @@ export const PriceChart = ({ forecastData, commodity = 'Crop' }) => {
       ...(forecastData.min_prices
         ? [
             {
-              label: 'Min Expected Rate (₹/Quintal)',
+              label: 'Indicative lower range (₹/Quintal)',
               data: forecastData.min_prices,
               borderColor: '#A4B69A',
               borderDash: [5, 5],
-              fill: false,
+              fill: forecastData.max_prices ? '+1' : false,
               pointRadius: 3,
               pointBackgroundColor: '#879C7D',
+              tension: 0.35,
+            },
+          ]
+        : []),
+      ...(forecastData.max_prices
+        ? [
+            {
+              label: 'Indicative upper range (₹/Quintal)',
+              data: forecastData.max_prices,
+              borderColor: '#A4B69A',
+              borderDash: [5, 5],
+              fill: false,
+              pointRadius: 0,
               tension: 0.35,
             },
           ]

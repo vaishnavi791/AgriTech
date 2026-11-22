@@ -27,7 +27,7 @@ backend/
 │   │   ├── crop.py          # Crop recommendation route module contract
 │   │   ├── disease.py       # Disease detection route module contract
 │   │   ├── cost.py          # Cost estimation route module contract
-│   │   ├── price.py         # Price forecasting route module contract
+│   │   ├── price.py         # Price forecasting API
 │   │   └── chatbot.py       # Chatbot route module contract
 │   ├── schemas/
 │   │   ├── health.py        # Health response Pydantic schema
@@ -37,7 +37,7 @@ backend/
 │   │   ├── crop.py          # Crop recommendation contract schemas (TBD)
 │   │   ├── disease.py       # Disease detection contract schemas (TBD)
 │   │   ├── cost.py          # Cost estimation contract schemas (TBD)
-│   │   └── price.py         # Price forecasting contract schemas (TBD)
+│   │   └── price.py         # Price forecasting request/response schemas
 │   ├── models/
 │   │   ├── user.py          # UserDocument database document model
 │   │   ├── prediction.py    # PredictionDocument database document model
@@ -51,7 +51,7 @@ backend/
 │   │   ├── crop_service.py       # Crop service placeholder
 │   │   ├── disease_service.py    # Disease service placeholder
 │   │   ├── cost_service.py       # Cost service placeholder
-│   │   └── price_service.py      # Price service placeholder
+│   │   └── price_service.py      # Mandi price trend forecast
 │   └── utils/
 │       └── helpers.py       # Helper utilities (serialization, timestamps)
 ├── .env.example             # Example environment variables
@@ -194,6 +194,17 @@ Tokens contain the user identity and an expiration claim. Expired, malformed, in
 
 ---
 
+## AI Agri Assistant
+
+`POST /api/chatbot/chat` accepts a non-empty `message` and an optional application `session_id`.
+Anonymous requests remain supported. When a valid bearer token is supplied, persisted chat records are associated with that user; this endpoint does not change the authentication requirements of any existing route.
+
+The assistant uses `google-genai==2.23.0`, `gemini-3.8-flash`, and the asynchronous Gemini Interactions API. The browser keeps a durable application session ID in local storage. MongoDB remains the durable application conversation history; each assistant record stores the provider continuation identifier separately at `metadata.provider_interaction_id`.
+
+Normal turns continue with that provider identifier. If Gemini explicitly rejects the prior continuation interaction as unavailable or expired, the backend rebuilds a new provider interaction from up to ten recent MongoDB messages. Database history lookup and persistence are best-effort, so MongoDB outages do not prevent an otherwise successful assistant response. Gemini credentials are read from `GEMINI_API_KEY` and must never be logged or committed.
+
+---
+
 ## Crop Recommendation
 
 `POST /api/crop/predict` loads `ml/crop/crop_recommendation_model.pkl` with `joblib` and calls the supplied `RandomForestClassifier`. The runtime dependency is pinned to scikit-learn `1.7.1`, matching the version recorded in the artifact warning during verification.
@@ -228,6 +239,89 @@ Response body:
 The model is loaded lazily and cached for reuse. scikit-learn compatibility warnings are not suppressed; the dependency is pinned to the verified artifact version.
 
 ---
+
+## Plant Disease Detection
+
+`POST /api/disease/predict` processes uploaded plant leaf imagery using the fine-tuned MobileNetV2 disease model (`ml/disease/fine_tuned_model.h5`).
+
+### Model Architecture & Runtime
+- **Model**: MobileNetV2 base (157 layers) + `GlobalAveragePooling2D` + `Dense(128)` + `Dense(38, activation='softmax')`.
+- **Runtime Loader**: Loaded once at FastAPI startup via `tf_keras.models.load_model(..., compile=False)`.
+- **Dependencies**: `tensorflow==2.21.0`, `tf-keras==2.21.0`, `pillow==12.3.0`, `python-multipart>=0.0.9`.
+
+### Request Format
+- **HTTP Method**: `POST`
+- **Content-Type**: `multipart/form-data`
+- **Field**: `file` (binary image)
+- **Accepted MIME Types**: `image/jpeg`, `image/png`, `image/webp`
+- **Max File Size**: 10 MB
+
+### Preprocessing Pipeline
+1. In-memory Pillow decoding and conversion to RGB (`image.convert("RGB")`).
+2. Resized to `(224, 224)` via bilinear interpolation.
+3. External MobileNetV2 normalization to `[-1, 1]` via `(x / 127.5) - 1.0` (zero double-normalization risk; model contains no internal `Rescaling` layers).
+3. Kaggle notebook normalization to `[0.0, 1.0]` via `image / 255.0` (zero double-normalization risk; model contains no internal `Rescaling` layers).
+4. Expanded to batch tensor `(1, 224, 224, 3)`.
+
+### Response Schema (`200 OK`)
+```json
+{
+  "success": true,
+  "predicted_class_index": 10,
+  "prediction": null,
+  "confidence": 0.9937,
+  "message": "Inference completed successfully. Authoritative class-label mapping is pending confirmation."
+  "predicted_class_index": 1,
+  "prediction": "Apple___Black_rot",
+  "confidence": 0.9965,
+  "message": "Plant disease diagnosis completed successfully: Apple___Black_rot"
+}
+```
+- `predicted_class_index`: Integer in `[0, 37]` corresponding to the model's argmax output.
+- `prediction`: Always explicitly present with value `null` while authoritative class-label mapping is pending confirmation from the training dataset.
+- `prediction`: Authoritative plant disease label mapped directly from the source Kaggle training notebook classes.
+- `confidence`: Genuine maximum softmax probability float in `[0.0, 1.0]`.
+
+### Error Responses
+- `400 Bad Request`: Non-image file type, missing file, empty upload, or corrupted/unreadable image.
+- `413 Payload Too Large`: Image file size exceeds 10MB.
+- `503 Service Unavailable`: Disease model artifact missing or failed to load at startup.
+- `500 Internal Server Error`: Controlled error if unexpected inference failure occurs (no internal paths or stack traces exposed).
+
+---
+
+## Mandi Price Forecasting API
+
+`POST /api/price/forecast` projects prices from the latest stored daily modal
+prices in MongoDB's `mandi_prices` collection. It uses ordinary least-squares
+linear regression over up to the latest 30 distinct daily observations. This is
+a transparent statistical baseline, not a trained machine-learning or seasonal
+model. When no market is specified, records are reduced to a daily median
+across matching markets; otherwise only the requested market is used.
+
+Request:
+
+```json
+{
+  "commodity": "Cotton",
+  "state": "Andhra Pradesh",
+  "market": "Adoni APMC",
+  "days_ahead": 15
+}
+```
+
+`market` is optional. `days_ahead` must be between 7 and 30. The response
+includes the latest observed price, horizon-end trend estimate, percentage
+change, source, observation count, observed date, and chart series. Prices in
+the forecast response and chart are in INR per quintal; stored modal prices are
+normalized to INR per kilogram.
+
+At least three distinct observation dates with valid modal prices are required.
+The projection starts after the last recorded mandi date, not the current
+calendar date. If the last record is more than 30 days old, the response flags
+the data as stale and includes a warning. The chart's indicative range is
+derived from regression residual error and is not a formal confidence interval.
+No recommendation to hold or sell is generated.
 
 ## Database Collections & Persistence Infrastructure
 

@@ -96,6 +96,12 @@ def flatten_date_wise_commodity_response(
             "market_name",
             "name",
         )
+        district_name = _first(
+            market,
+            "district",
+            "districtName",
+            "district_name",
+        )
 
         dates = _first(
             market,
@@ -159,6 +165,7 @@ def flatten_date_wise_commodity_response(
                     {
                         "state_id": state_id,
                         "state_name": state_name,
+                        "district": district_name,
                         "market_name": market_name,
                         "commodity_id": commodity_id,
                         "commodity": commodity_name,
@@ -195,7 +202,7 @@ def flatten_date_wise_commodity_response(
                                 "modal_price",
                             )
                         ),
-                        "source": "AGMARKNET",
+                        "source": "AGMARKNET/data.gov.in",
                     }
                 )
 
@@ -216,7 +223,7 @@ def flatten_date_wise_commodity_response(
                         "minimum_price_inr_per_quintal": None,
                         "maximum_price_inr_per_quintal": None,
                         "modal_price_inr_per_quintal": None,
-                        "source": "AGMARKNET",
+                        "source": "AGMARKNET/data.gov.in",
                     }
                 )
 

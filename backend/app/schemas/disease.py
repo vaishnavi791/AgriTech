@@ -1,34 +1,30 @@
-"""Disease detection schemas.
+"""Disease detection schemas."""
 
-NOTE: All fields below are TEMPORARY / TBD and represent contract placeholders.
-Because ml/disease/ files in the repository contain no code or model artifacts,
-image upload format, multipart requirements, and diagnostic classes remain TBD.
-"""
-from typing import Any, Optional
+from typing import Optional
 from pydantic import BaseModel, Field
 
 
-class DiseasePredictRequest(BaseModel):
-    status: str = Field(
-        default="TBD",
-        description="TEMPORARY/TBD: Image format (multipart/file/JSON) and parameters will be derived from ml/disease.",
-    )
-    image_data: Optional[Any] = Field(
-        default=None,
-        description="TEMPORARY/TBD: Plant leaf image payload placeholder.",
-    )
-
-
 class DiseasePredictResponse(BaseModel):
-    status: str = Field(
-        default="TBD",
-        description="TEMPORARY/TBD: Disease detection response fields will be derived from ml/disease when available.",
+    """Schema for plant disease diagnosis response."""
+
+    success: bool = Field(
+        default=True,
+        description="Indicates whether plant disease analysis succeeded",
+    )
+    predicted_class_index: int = Field(
+        ge=0,
+        le=37,
+        description="Raw model argmax class index (0-37)",
+    )
+    prediction: Optional[str] = Field(
+        default=None,
+        description="Authoritative plant disease classification label corresponding to predicted_class_index",
+    )
+    confidence: float = Field(
+        ge=0.0,
+        le=1.0,
+        description="Genuine model softmax confidence score between 0.0 and 1.0",
     )
     message: str = Field(
-        default="Contract registered. Model interface is TBD.",
-        description="Contract status message.",
-    )
-    diagnosis: Optional[Any] = Field(
-        default=None,
-        description="TEMPORARY/TBD: Disease diagnosis output placeholder.",
+        description="Diagnostic status or outcome description",
     )
