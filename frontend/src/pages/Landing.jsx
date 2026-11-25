@@ -21,7 +21,8 @@ export const Landing = () => {
   useEffect(() => {
     const audio = new Audio('/wind-ambience.mp3');
     audio.loop = true;
-    audio.volume = 0.12; // Subtle 10-15% ambient level
+    audio.volume = 0.55;
+    audio.muted = false;
     audioRef.current = audio;
 
     return () => {
@@ -225,7 +226,7 @@ export const Landing = () => {
       {/* ========================================================================= */}
       <section
         ref={diseaseRef}
-        className="w-full min-h-[85vh] py-20 sm:py-28 lg:py-36 bg-cream-100 flex items-center border-t border-cream-300/60"
+        className="w-full min-h-[85vh] py-20 sm:py-28 lg:py-36 bg-cream-100 flex items-center"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
@@ -309,8 +310,9 @@ export const Landing = () => {
             }`}
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/30 lg:w-3/4 pointer-events-none" />
-          <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-cream-100/40 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-black/20 pointer-events-none" />
+          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-cream-100/25 to-transparent pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/35 to-transparent pointer-events-none" />
         </div>
 
         {/* Staggered Editorial Typography */}
@@ -353,7 +355,7 @@ export const Landing = () => {
       {/* ========================================================================= */}
       <section
         ref={marketRef}
-        className="w-full min-h-[85vh] py-20 sm:py-28 lg:py-36 bg-cream-50 flex items-center border-t border-cream-300/60"
+        className="w-full min-h-[85vh] py-20 sm:py-28 lg:py-36 bg-cream-50 flex items-center"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
@@ -449,7 +451,7 @@ export const Landing = () => {
           >
             <div className="border-l-2 border-sage-500/50 pl-5 py-2 space-y-2">
               <p className="text-xs text-sage-300 font-mono">
-                Farmer Inquiry:
+                {t('story.copilot.farmerInquiry')}
               </p>
               <p className="text-sm sm:text-base text-white/90 font-light italic">
                 {t('story.copilot.prompt')}
@@ -458,7 +460,7 @@ export const Landing = () => {
 
             <div className="border-l-2 border-cream-400/40 pl-5 py-2 space-y-2">
               <p className="text-xs text-cream-300 font-mono">
-                AgriTech Advisory:
+                {t('story.copilot.advisory')}
               </p>
               <p className="text-sm sm:text-base text-cream-100 font-light leading-relaxed">
                 {t('story.copilot.response')}

@@ -3,11 +3,13 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Leaf } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher';
 import AuthContext from '../context/AuthContext';
+import useLanguage from '../hooks/useLanguage';
 
 export const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, logout } = useContext(AuthContext);
+  const { t } = useLanguage();
   const isLanding = location.pathname === '/';
 
   const handleLogout = () => {
@@ -63,7 +65,7 @@ export const Navbar = () => {
                     : 'text-earth-dark border border-cream-300 hover:bg-cream-100'
                 }`}
               >
-                Logout
+                {t('nav.logout')}
               </button>
             )}
           </div>

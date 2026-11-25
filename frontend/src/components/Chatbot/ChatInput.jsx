@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { Send, Sparkles } from 'lucide-react';
-
-const SUGGESTIONS = [
-  'Best crop for black soil?',
-  'How to identify powdery mildew?',
-  'Estimated wheat seed cost per acre?',
-];
+import useLanguage from '../../hooks/useLanguage';
 
 export const ChatInput = ({ onSendMessage, disabled }) => {
+  const { t } = useLanguage();
   const [input, setInput] = useState('');
+  const suggestions = [
+    t('chatbot.suggestionCrop'),
+    t('chatbot.suggestionDisease'),
+    t('chatbot.suggestionCost'),
+  ];
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -27,7 +28,7 @@ export const ChatInput = ({ onSendMessage, disabled }) => {
       {/* Quick suggestions chips */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
         <Sparkles className="w-3.5 h-3.5 text-agri-600 flex-shrink-0" />
-        {SUGGESTIONS.map((suggestion, index) => (
+        {suggestions.map((suggestion, index) => (
           <button
             key={index}
             type="button"
@@ -46,7 +47,7 @@ export const ChatInput = ({ onSendMessage, disabled }) => {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask anything about crops, pests, prices..."
+          placeholder={t('chatbot.placeholder')}
           disabled={disabled}
           className="flex-1 px-3.5 py-2 text-xs sm:text-sm bg-white border border-cream-300 rounded-lg text-earth-dark focus:outline-none focus:ring-2 focus:ring-agri-600 focus:border-agri-600 transition disabled:opacity-60 placeholder:text-earth-muted"
         />
@@ -54,7 +55,7 @@ export const ChatInput = ({ onSendMessage, disabled }) => {
           type="submit"
           disabled={!input.trim() || disabled}
           className="p-2 bg-agri-600 text-cream-50 rounded-lg hover:bg-agri-700 disabled:opacity-40 disabled:hover:bg-agri-600 transition shadow-card"
-          aria-label="Send message"
+          aria-label={t('chatbot.send')}
         >
           <Send className="w-4 h-4" />
         </button>

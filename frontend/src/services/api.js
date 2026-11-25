@@ -27,6 +27,15 @@ api.interceptors.response.use(
       localStorage.removeItem(STORAGE_KEYS.TOKEN);
       localStorage.removeItem(STORAGE_KEYS.USER);
     }
+    const apiMessage =
+      error.response?.data?.error?.message ||
+      error.response?.data?.detail;
+    if (typeof apiMessage === 'string') {
+      error.message = apiMessage;
+    }
+    if (!error.response) {
+      error.message = 'Unable to reach the AgriTech server. Please verify that the backend is running.';
+    }
     return Promise.reject(error);
   }
 );

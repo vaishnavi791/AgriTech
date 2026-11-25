@@ -4,8 +4,10 @@ import {
 } from 'lucide-react';
 import PredictionCard from '../../components/PredictionCard';
 import { formatCurrency } from '../../utils/validation';
+import useLanguage from '../../hooks/useLanguage';
 
 export const CostResult = ({ result, onReset }) => {
+  const { t } = useLanguage();
   if (!result) return null;
 
   const data = result.estimate || result;
@@ -31,27 +33,27 @@ export const CostResult = ({ result, onReset }) => {
 
     breakdown = [
       {
-        label: 'Seeds & Saplings',
+        label: t('costResults.seeds'),
         amount: b.seed ?? 0,
         percentage: calcPct(b.seed ?? 0),
       },
       {
-        label: 'Fertilizers & Nutrients',
+        label: t('costResults.fertilizers'),
         amount: b.fertilizer ?? 0,
         percentage: calcPct(b.fertilizer ?? 0),
       },
       {
-        label: 'Farm Labor & Weeding',
+        label: t('costResults.labor'),
         amount: b.labor ?? 0,
         percentage: calcPct(b.labor ?? 0),
       },
       {
-        label: 'Tractor & Machinery',
+        label: t('costResults.machinery'),
         amount: b.machinery ?? 0,
         percentage: calcPct(b.machinery ?? 0),
       },
       {
-        label: 'Irrigation & Utilities',
+        label: t('costResults.irrigation'),
         amount: b.water ?? 0,
         percentage: calcPct(b.water ?? 0),
       },
@@ -59,7 +61,7 @@ export const CostResult = ({ result, onReset }) => {
 
     if (b.other_inputs) {
       breakdown.push({
-        label: 'Other Cultivation Inputs',
+        label: t('costResults.other'),
         amount: b.other_inputs,
         percentage: calcPct(b.other_inputs),
       });
@@ -68,48 +70,48 @@ export const CostResult = ({ result, onReset }) => {
 
   return (
     <PredictionCard
-      title="Cultivation Budget & Profit Projection"
-      subtitle="Itemized Agricultural Cost Breakdown"
-      badgeText="Financial Estimate"
+      title={t('costResults.title')}
+      subtitle={t('costResults.subtitle')}
+      badgeText={t('costResults.badge')}
       onReset={onReset}
-      resetLabel="Calculate New Estimate"
+      resetLabel={t('costResults.reset')}
     >
       <div className="space-y-6">
         {/* Top Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="p-5 bg-cream-50 border border-cream-300 rounded-xl space-y-1">
-            <span className="text-xs font-semibold text-earth-muted uppercase tracking-wider">Estimated Total Cost</span>
+            <span className="text-xs font-semibold text-earth-muted uppercase tracking-wider">{t('costResults.totalCost')}</span>
             <div className="font-serif text-2xl font-bold text-earth-dark">
-                {totalCost != null ? formatCurrency(totalCost) : 'Unavailable'}
+                {totalCost != null ? formatCurrency(totalCost) : t('costResults.unavailable')}
             </div>
             <p className="text-[11px] text-earth-muted">
                 {costPerAcre != null
-                  ? `${formatCurrency(costPerAcre)} per acre`
-                  : 'No cost data returned'}
+                  ? `${formatCurrency(costPerAcre)} ${t('costResults.perAcre')}`
+                  : t('costResults.noCostData')}
             </p>
           </div>
 
           <div className="p-5 bg-agri-50 border border-agri-200 rounded-xl space-y-1">
-            <span className="text-xs font-semibold text-agri-800 uppercase tracking-wider">Projected Gross Revenue</span>
+            <span className="text-xs font-semibold text-agri-800 uppercase tracking-wider">{t('costResults.grossRevenue')}</span>
             <div className="font-serif text-2xl font-bold text-agri-900">
                 {projectedRevenue != null
                   ? formatCurrency(projectedRevenue)
-                  : 'Unavailable'}
+                  : t('costResults.unavailable')}
             </div>
-            <p className="text-[11px] text-agri-700">Based on prevailing market modal rates</p>
+            <p className="text-[11px] text-agri-700">{t('costResults.marketRateBasis')}</p>
           </div>
 
           <div className="p-5 bg-sage-100 border border-sage-300 rounded-xl space-y-1">
-            <span className="text-xs font-semibold text-agri-900 uppercase tracking-wider">Expected Net Profit</span>
+            <span className="text-xs font-semibold text-agri-900 uppercase tracking-wider">{t('costResults.netProfit')}</span>
             <div className="font-serif text-2xl font-bold text-agri-900">
                 {projectedProfit != null
                   ? formatCurrency(projectedProfit)
-                  : 'Unavailable'}
+                  : t('costResults.unavailable')}
             </div>
             <p className="text-[11px] text-agri-800 font-semibold">
                 {profitMargin != null
-                  ? `${profitMargin}% ROI from backend calculation`
-                  : 'ROI unavailable'}
+                  ? `${profitMargin}% ${t('costResults.roiBasis')}`
+                  : t('costResults.roiUnavailable')}
             </p>
           </div>
         </div>
@@ -119,9 +121,9 @@ export const CostResult = ({ result, onReset }) => {
           <div className="px-5 py-3.5 bg-cream-50 border-b border-cream-300 flex items-center justify-between">
             <h4 className="font-serif text-sm font-bold text-earth-dark flex items-center space-x-2">
               <PieChart className="w-4 h-4 text-agri-600" />
-              <span>Expenditure Breakdown</span>
+              <span>{t('costResults.breakdown')}</span>
             </h4>
-            <span className="text-xs text-earth-muted">All amounts in INR (₹)</span>
+            <span className="text-xs text-earth-muted">{t('costResults.inrAmounts')}</span>
           </div>
 
           <div className="divide-y divide-cream-200">

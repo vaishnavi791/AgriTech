@@ -5,9 +5,11 @@ import usePrediction from '../../hooks/usePrediction';
 import ErrorMessage from '../../components/ErrorMessage';
 import Loading from '../../components/Loading';
 import CostResult from './CostResult';
+import useLanguage from '../../hooks/useLanguage';
 
 export const CostEstimation = ({ initialCrop = null }) => {
   const { costResult, setCostResult } = usePrediction();
+  const { t } = useLanguage();
 
   const [formData, setFormData] = useState({
     crop: '',
@@ -54,7 +56,7 @@ export const CostEstimation = ({ initialCrop = null }) => {
       } catch (err) {
         setErrorMessage(
           err.response?.data?.detail ||
-            'No verified AGMARKNET commodities are currently available.'
+            'costFields.commoditiesError'
         );
       } finally {
         setMetadataLoading(false);
@@ -82,7 +84,7 @@ export const CostEstimation = ({ initialCrop = null }) => {
         setAvailableStates([]);
         setErrorMessage(
           err.response?.data?.detail ||
-            `No verified states are currently available for ${formData.crop}.`
+            { key: 'costFields.statesError', params: { crop: formData.crop } }
         );
       }
     };
@@ -107,6 +109,32 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
     loadMarkets();
   }, [formData.crop, formData.state]);
+
+  useEffect(() => {
+    if (!formData.state) return;
+
+    const loadCommoditiesForState = async () => {
+      try {
+        const commodities = await costService.getAvailableCommodities(formData.state);
+        setAvailableCommodities(commodities);
+        setFormData((current) => ({
+          ...current,
+          crop: commodities.some((item) => item.commodity === current.crop)
+            ? current.crop
+            : commodities[0]?.commodity || '',
+          market: '',
+        }));
+      } catch (err) {
+        setAvailableCommodities([]);
+        setErrorMessage(
+          err.response?.data?.detail ||
+            { key: 'costFields.stateCommoditiesError', params: { state: formData.state } }
+        );
+      }
+    };
+
+    loadCommoditiesForState();
+  }, [formData.state]);
 
   useEffect(() => {
     const fetchMandiPrice = async () => {
@@ -138,8 +166,10 @@ export const CostEstimation = ({ initialCrop = null }) => {
           market_price_inr_per_kg: '',
         }));
         setErrorMessage(
-          err.response?.data?.detail ||
-            `No verified mandi price is currently available for ${formData.crop} in ${formData.state}.`
+          err.response?.status === 404
+            ? { key: 'costFields.priceError', params: { crop: formData.crop, state: formData.state } }
+            : err.response?.data?.detail ||
+                { key: 'costFields.priceError', params: { crop: formData.crop, state: formData.state } }
         );
       } finally {
         setMandiLoading(false);
@@ -212,7 +242,7 @@ export const CostEstimation = ({ initialCrop = null }) => {
       const msg =
         err.response?.data?.detail ||
         err.message ||
-        'Failed to calculate cost estimation. Please check the entered values.';
+        'costFields.estimateError';
 
       setErrorMessage(
         Array.isArray(msg)
@@ -231,6 +261,11 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
   const inputClass =
     'w-full px-3.5 py-2 text-sm bg-cream-50/50 border border-cream-300 rounded-lg text-earth-dark focus:ring-2 focus:ring-agri-600 focus:border-agri-600 outline-none transition';
+  const commodityLabel = (commodity) => {
+    const key = `cropResults.cropNames.${commodity.toLowerCase()}`;
+    const translated = t(key);
+    return translated === key ? commodity : translated;
+  };
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 space-y-8">
@@ -240,12 +275,11 @@ export const CostEstimation = ({ initialCrop = null }) => {
         </div>
 
         <h1 className="font-serif text-3xl font-bold text-earth-dark tracking-tight">
-          Cultivation Cost & Profit Estimator
+          {t('cost.title')}
         </h1>
 
         <p className="text-xs sm:text-sm text-earth-muted max-w-xl mx-auto leading-relaxed">
-          Calculate cultivation cost, expected revenue, net profit and ROI
-          using your farm inputs and verified mandi prices.
+          {t('cost.subtitle')}
         </p>
       </div>
 
@@ -257,32 +291,41 @@ export const CostEstimation = ({ initialCrop = null }) => {
       {costResult ? (
         <CostResult result={costResult} onReset={handleReset} />
       ) : metadataLoading ? (
-        <Loading message="Loading verified AGMARKNET commodities..." />
+        <Loading message="costFields.metadataLoading" />
       ) : (
         <div className="bg-white rounded-xl shadow-card border border-cream-300 p-6 sm:p-8">
-          <form onSubmit={handleSubmit} className="space-y-7">
+          <form
+            onSubmit={handleSubmit}
+            onInvalidCapture={(event) => event.target.setCustomValidity(t('common.required'))}
+            onInputCapture={(event) => event.target.setCustomValidity('')}
+            className="space-y-7"
+          >
 
             <div className="border-b border-cream-200 pb-3.5">
               <h3 className="font-serif text-sm font-bold uppercase tracking-wider text-agri-800">
-                1. General Farm Details
+                1. {t('cost.generalDetails')}
               </h3>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
-                  Crop
+                  {t('cost.crop')}
                 </label>
 
                 <select
                   name="crop"
                   value={formData.crop}
                   onChange={handleChange}
+                  disabled={!availableCommodities.length}
                   className={inputClass}
                 >
+                  {!availableCommodities.length && (
+                    <option value="">{t('costFields.noCommodities')}</option>
+                  )}
                   {availableCommodities.map((item) => (
                     <option key={item.commodity} value={item.commodity}>
-                      {item.commodity}
+                      {commodityLabel(item.commodity)}
                     </option>
                   ))}
                 </select>
@@ -290,15 +333,19 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
-                  State
+                  {t('cost.state')}
                 </label>
 
                 <select
                   name="state"
                   value={formData.state}
                   onChange={handleChange}
+                  disabled={!availableStates.length}
                   className={inputClass}
                 >
+                  {!availableStates.length && (
+                    <option value="">{t('costFields.noStates')}</option>
+                  )}
                   {availableStates.map((item) => (
                     <option key={item.state} value={item.state}>
                       {item.state}
@@ -309,15 +356,16 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
-                  Mandi / Market
+                  {t('cost.market')}
                 </label>
                 <select
                   name="market"
                   value={formData.market}
                   onChange={handleChange}
+                  disabled={!availableMarkets.length}
                   className={inputClass}
                 >
-                  <option value="">All available markets</option>
+                  <option value="">{t('costFields.allMarkets')}</option>
                   {availableMarkets.map((item) => (
                     <option key={item.market} value={item.market}>
                       {item.market}
@@ -328,7 +376,7 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
-                  Land Area (Acres)
+                  {t('cost.landArea')}
                 </label>
 
                 <input
@@ -346,14 +394,14 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
             <div className="border-b border-cream-200 pb-3.5">
               <h3 className="font-serif text-sm font-bold uppercase tracking-wider text-agri-800">
-                2. Seed & Fertilizer Inputs
+                {t('costFields.seedSection')}
               </h3>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
-                  Seed Rate (kg/acre)
+                  {t('costFields.seedRate')}
                 </label>
                 <input
                   type="number"
@@ -369,7 +417,7 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
-                  Seed Price (₹/kg)
+                  {t('costFields.seedPrice')}
                 </label>
                 <input
                   type="number"
@@ -385,7 +433,7 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
-                  Nitrogen (kg/acre)
+                  {t('costFields.nitrogen')}
                 </label>
                 <input
                   type="number"
@@ -401,7 +449,7 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
-                  Phosphorus (kg/acre)
+                  {t('costFields.phosphorus')}
                 </label>
                 <input
                   type="number"
@@ -417,7 +465,7 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
-                  Potassium (kg/acre)
+                  {t('costFields.potassium')}
                 </label>
                 <input
                   type="number"
@@ -433,7 +481,7 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
-                  Fertilizer Price (₹/kg)
+                  {t('costFields.fertilizerPrice')}
                 </label>
                 <input
                   type="number"
@@ -450,14 +498,14 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
             <div className="border-b border-cream-200 pb-3.5">
               <h3 className="font-serif text-sm font-bold uppercase tracking-wider text-agri-800">
-                3. Water & Labour
+                {t('costFields.waterSection')}
               </h3>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
-                  Water Requirement (mm)
+                  {t('costFields.waterRequirement')}
                 </label>
                 <input
                   type="number"
@@ -473,7 +521,7 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
-                  Water Rate (₹/mm/acre)
+                  {t('costFields.waterRate')}
                 </label>
                 <input
                   type="number"
@@ -489,7 +537,7 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
-                  Efficiency Factor
+                  {t('costFields.efficiency')}
                 </label>
                 <input
                   type="number"
@@ -505,7 +553,7 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
-                  Labour Days/Acre
+                  {t('costFields.laborDays')}
                 </label>
                 <input
                   type="number"
@@ -521,7 +569,7 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
-                  Wage (₹/day)
+                  {t('costFields.wage')}
                 </label>
                 <input
                   type="number"
@@ -538,14 +586,14 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
             <div className="border-b border-cream-200 pb-3.5">
               <h3 className="font-serif text-sm font-bold uppercase tracking-wider text-agri-800">
-                4. Yield & Market Price
+                {t('costFields.yieldSection')}
               </h3>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
-                  Expected Yield (kg/acre)
+                  {t('costFields.expectedYield')}
                 </label>
                 <input
                   type="number"
@@ -561,7 +609,7 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
-                  Current Mandi Price (₹/kg)
+                  {t('costFields.currentPrice')}
                 </label>
 
                 <input
@@ -574,7 +622,7 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
                 {mandiLoading && (
                   <p className="text-[11px] text-earth-muted mt-1">
-                    Fetching verified mandi price...
+                    {t('costFields.fetchingPrice')}
                   </p>
                 )}
 
@@ -588,7 +636,7 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
-                  Machinery (₹/acre)
+                  {t('costFields.machinery')}
                 </label>
                 <input
                   type="number"
@@ -603,7 +651,7 @@ export const CostEstimation = ({ initialCrop = null }) => {
 
               <div>
                 <label className="block text-xs font-semibold text-earth-dark mb-1 uppercase">
-                  Other Inputs (₹/acre)
+                  {t('costFields.otherInputs')}
                 </label>
                 <input
                   type="number"
@@ -624,10 +672,10 @@ export const CostEstimation = ({ initialCrop = null }) => {
                 className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 bg-agri-600 hover:bg-agri-700 text-cream-50 font-semibold rounded-lg shadow-card hover:shadow-card-hover transition disabled:opacity-50"
               >
                 {isLoading ? (
-                  <Loading message="Calculating..." size="small" />
+                  <Loading message="costFields.calculating" size="small" />
                 ) : (
                   <>
-                    <span>Calculate Cost & ROI</span>
+                    <span>{t('costFields.calculate')}</span>
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </>
                 )}

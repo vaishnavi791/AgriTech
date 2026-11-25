@@ -6,6 +6,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import PredictionCard from '../../components/PredictionCard';
+import useLanguage from '../../hooks/useLanguage';
 
 /**
  * Formats a raw authoritative class label into a human-readable title.
@@ -36,16 +37,21 @@ export const formatDiseaseLabel = (rawLabel) => {
 };
 
 export const DiseaseResult = ({ result, imagePreview, onReset }) => {
+  const { t } = useLanguage();
   if (!result) return null;
 
   const rawLabel = result.prediction || result.disease || result.class_name || '';
   const hasClassIndex = result.predicted_class_index != null;
 
+  const diseaseNameKey = `diseaseResults.names.${rawLabel}`;
+  const translatedDiseaseName = rawLabel ? t(diseaseNameKey) : '';
   const formattedDiseaseName = rawLabel
-    ? formatDiseaseLabel(rawLabel)
+    ? translatedDiseaseName === diseaseNameKey
+      ? formatDiseaseLabel(rawLabel)
+      : translatedDiseaseName
     : (hasClassIndex
-      ? `Class Index #${result.predicted_class_index}`
-      : 'Diagnostic Inconclusive');
+      ? `${t('diseaseResults.classIndex')} #${result.predicted_class_index}`
+      : t('diseaseResults.inconclusive'));
 
   const confidence =
     typeof result.confidence === 'number'
@@ -54,42 +60,36 @@ export const DiseaseResult = ({ result, imagePreview, onReset }) => {
 
   const isHealthy = rawLabel.toLowerCase().includes('healthy');
 
-  const symptoms = result.symptoms || (isHealthy ? [
-    'Uniform green pigmentation across the leaf blade.',
-    'Intact cellular structure with no necrotic lesions or chlorosis.',
-    'Vigorous foliar development without fungal growth or viral mosaic.',
-  ] : [
-    'Yellowing or chlorotic spotting across foliar tissue.',
-    'Irregular necrotic lesions on lower surface.',
-    'Premature senescence and leaf dropping.',
-  ]);
+  const symptoms = result.symptoms || (isHealthy
+    ? [0, 1, 2].map((index) => t(`diseaseResults.healthySymptoms.${index}`))
+    : [0, 1, 2].map((index) => t(`diseaseResults.diseaseSymptoms.${index}`)));
 
-  const treatments = result.treatment || result.remedies || (isHealthy ? [
-    'Maintain standard irrigation and nutrient management schedules.',
-    'Continue routine scouting for early pest or disease pressure.',
-    'Ensure balanced N-P-K fertilizer application to sustain plant immunity.',
-  ] : [
-    'Apply targeted organic fungicide or bio-pesticide suited for the identified condition.',
-    'Improve inter-crop air circulation by moderate canopy pruning.',
-    'Avoid overhead sprinkler irrigation to minimize prolonged foliar wetness.',
-  ]);
+  const treatments = result.treatment || result.remedies || (isHealthy
+    ? [0, 1, 2].map((index) => t(`diseaseResults.healthyTreatments.${index}`))
+    : [0, 1, 2].map((index) => t(`diseaseResults.diseaseTreatments.${index}`)));
 
-  const preventionTips = result.prevention || [
-    'Use certified disease-resistant hybrid seed varieties.',
-    'Follow a crop rotation schedule with non-host crops to interrupt pathogen life cycles.',
-    'Maintain adequate plant spacing and field sanitation to optimize airflow.',
-  ];
+  const preventionTips = result.prevention || [0, 1, 2].map(
+    (index) => t(`diseaseResults.preventionTips.${index}`)
+  );
 
-  const badgeText = isHealthy ? 'Healthy Specimen' : 'Pathogen Detected';
+  const backendGenericMessage = typeof result.message === 'string'
+    && result.message.startsWith('Plant disease diagnosis completed successfully:');
+  const summary = backendGenericMessage
+    ? t(isHealthy ? 'diseaseResults.healthyMessage' : 'diseaseResults.diseaseMessage')
+        .replace('{disease}', formattedDiseaseName)
+    : result.description || result.message || t(
+      isHealthy ? 'diseaseResults.healthyMessage' : 'diseaseResults.diseaseMessage'
+    ).replace('{disease}', formattedDiseaseName);
+  const badgeText = t(isHealthy ? 'diseaseResults.healthy' : 'diseaseResults.detected');
 
   return (
     <PredictionCard
-      title="Disease Diagnostics Report"
-      subtitle="Computer Vision Leaf Pathology Classification"
+      title={t('diseaseResults.title')}
+      subtitle={t('diseaseResults.subtitle')}
       confidence={confidence}
       badgeText={badgeText}
       onReset={onReset}
-      resetLabel="Analyze Another Image"
+      resetLabel={t('diseaseResults.reset')}
     >
       <div className="space-y-6">
         {/* Diagnosis Overview Card */}
@@ -98,7 +98,7 @@ export const DiseaseResult = ({ result, imagePreview, onReset }) => {
             <div className="w-full md:w-48 h-48 rounded-lg overflow-hidden border border-cream-300 shadow-card flex-shrink-0 bg-cream-200">
               <img
                 src={imagePreview}
-                alt="Analyzed leaf specimen"
+                alt={t('diseaseResults.imageAlt')}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -118,11 +118,7 @@ export const DiseaseResult = ({ result, imagePreview, onReset }) => {
             </div>
 
             <p className="text-xs sm:text-sm text-earth-muted leading-relaxed">
-              {result.message ||
-                result.description ||
-                (isHealthy
-                  ? 'No visible signs of pathogen damage were detected. Foliage displays healthy physiological characteristics.'
-                  : `Diagnostic pattern indicates symptoms consistent with ${formattedDiseaseName}. Timely corrective agronomic treatment is advised.`)}
+              {summary}
             </p>
 
             <div className="pt-2 flex flex-wrap gap-2">
@@ -133,23 +129,23 @@ export const DiseaseResult = ({ result, imagePreview, onReset }) => {
                     : 'bg-terracotta-50 text-terracotta-700 border-red-200'
                 }`}
               >
-                Status: {isHealthy ? 'No Infection' : 'Active Intervention Required'}
+                {t('diseaseResults.status')}: {isHealthy ? t('diseaseResults.noInfection') : t('diseaseResults.intervention')}
               </span>
 
               <span className="px-3 py-1 rounded-full text-xs font-semibold bg-cream-200 text-earth-dark border border-cream-300">
-                Confidence:{' '}
+                {t('diseaseResults.confidence')}:{' '}
                 {(confidence > 1 ? confidence : confidence * 100).toFixed(1)}%
               </span>
 
               {hasClassIndex && (
                 <span className="px-3 py-1 rounded-full text-xs font-semibold bg-agri-50 text-agri-800 border border-agri-200">
-                  Output Index: #{result.predicted_class_index}
+                  {t('diseaseResults.outputIndex')}: #{result.predicted_class_index}
                 </span>
               )}
 
               {rawLabel && (
                 <span className="px-3 py-1 rounded-full text-xs font-semibold bg-cream-100 text-earth-muted border border-cream-300 font-mono">
-                  {rawLabel}
+                  {formattedDiseaseName}
                 </span>
               )}
             </div>
@@ -161,7 +157,7 @@ export const DiseaseResult = ({ result, imagePreview, onReset }) => {
           <div className="bg-white border border-cream-300 rounded-xl p-5 shadow-card space-y-3">
             <h4 className="font-serif text-sm font-bold text-earth-dark flex items-center space-x-2">
               <AlertTriangle className="w-4 h-4 text-harvest-600" />
-              <span>Observable Symptoms</span>
+              <span>{t('diseaseResults.symptomsTitle')}</span>
             </h4>
 
             <ul className="text-xs sm:text-sm text-earth-muted space-y-2 list-disc list-inside leading-relaxed">
@@ -174,7 +170,7 @@ export const DiseaseResult = ({ result, imagePreview, onReset }) => {
           <div className="bg-white border border-cream-300 rounded-xl p-5 shadow-card space-y-3">
             <h4 className="font-serif text-sm font-bold text-earth-dark flex items-center space-x-2">
               <Pill className="w-4 h-4 text-agri-600" />
-              <span>Prescribed Remedies & Treatment</span>
+              <span>{t('diseaseResults.treatmentTitle')}</span>
             </h4>
 
             <ul className="text-xs sm:text-sm text-earth-muted space-y-2 list-disc list-inside leading-relaxed">
@@ -189,7 +185,7 @@ export const DiseaseResult = ({ result, imagePreview, onReset }) => {
         <div className="bg-agri-50/70 border border-agri-200 rounded-xl p-5 space-y-3">
           <h4 className="font-serif text-sm font-bold text-agri-900 flex items-center space-x-2">
             <CheckCircle2 className="w-4 h-4 text-agri-600" />
-            <span>Preventive Agronomic Best Practices</span>
+            <span>{t('diseaseResults.preventionTitle')}</span>
           </h4>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-earth-charcoal">

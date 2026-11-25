@@ -1,5 +1,6 @@
 import React from 'react';
 import { CheckCircle2, RotateCcw } from 'lucide-react';
+import useLanguage from '../hooks/useLanguage';
 
 export const PredictionCard = ({
   title,
@@ -10,6 +11,7 @@ export const PredictionCard = ({
   onReset,
   resetLabel = 'Run New Analysis',
 }) => {
+  const { t } = useLanguage();
   return (
     <div className="bg-white rounded-xl border border-cream-300 shadow-card overflow-hidden">
       {/* Header Banner - Solid Earthy Green without harsh gradients */}
@@ -25,7 +27,7 @@ export const PredictionCard = ({
         <div className="flex items-center space-x-2">
           {confidence !== undefined && confidence !== null && (
             <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-agri-800/80 text-cream-100 border border-agri-600/60">
-              {typeof confidence === 'number' ? `${(confidence > 1 ? confidence : confidence * 100).toFixed(1)}% Match` : confidence}
+              {typeof confidence === 'number' ? `${(confidence > 1 ? confidence : confidence * 100).toFixed(1)}% ${t('common.match')}` : confidence}
             </span>
           )}
           <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-sage-200 text-agri-900 border border-sage-300">

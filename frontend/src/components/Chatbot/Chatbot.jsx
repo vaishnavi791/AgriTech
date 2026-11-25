@@ -3,6 +3,7 @@ import { X, Minimize2, Bot } from 'lucide-react';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import chatbotService from '../../services/chatbotService';
+import useLanguage from '../../hooks/useLanguage';
 
 const CHATBOT_SESSION_STORAGE_KEY = 'agritech_chatbot_session_id';
 
@@ -17,13 +18,14 @@ const getOrCreateChatSessionId = () => {
 };
 
 export const Chatbot = () => {
+  const { t } = useLanguage();
   const [sessionId, setSessionId] = useState(getOrCreateChatSessionId);
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
       id: 'welcome',
       role: 'assistant',
-      content: 'Hello! I am your AgriTech AI Assistant. How can I assist you with your crops, disease diagnostics, or farm planning today?',
+      content: t('chatbot.welcome'),
       timestamp: 'Now',
     },
   ]);
@@ -112,7 +114,7 @@ export const Chatbot = () => {
             <Bot className="w-5 h-5" />
             <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-sage-300 rounded-full border border-agri-700" />
           </div>
-          <span className="text-sm font-semibold pr-1">AI Assistant</span>
+          <span className="text-sm font-semibold pr-1">{t('chatbot.assistant')}</span>
         </button>
       )}
 
@@ -126,9 +128,9 @@ export const Chatbot = () => {
                 <Bot className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="font-serif text-sm font-bold text-cream-50">AgriTech Assistant</h4>
+                <h4 className="font-serif text-sm font-bold text-cream-50">{t('chatbot.assistant')}</h4>
                 <span className="text-[11px] text-sage-200 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-sage-300 rounded-full inline-block" /> Agronomic Advisor
+                  <span className="w-1.5 h-1.5 bg-sage-300 rounded-full inline-block" /> {t('chatbot.advisor')}
                 </span>
               </div>
             </div>

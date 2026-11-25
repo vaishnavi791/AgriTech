@@ -20,13 +20,19 @@ router = APIRouter(prefix="/mandi", tags=["Mandi Prices"])
 
 @router.get("/commodities")
 async def available_commodities(state: str | None = None):
-    return await get_available_mandi_commodities(state=state)
+    try:
+        return await get_available_mandi_commodities(state=state)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail="Mandi database is currently unavailable.") from exc
 
 
 @router.get("/states")
 async def available_states(crop: str | None = None):
-    crop_values = list(crop_variants(crop)) if crop else None
-    return await get_available_mandi_states(crop=crop_values)
+    try:
+        crop_values = list(crop_variants(crop)) if crop else None
+        return await get_available_mandi_states(crop=crop_values)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail="Mandi database is currently unavailable.") from exc
 
 
 @router.get("/available-markets")
@@ -34,10 +40,13 @@ async def available_markets(
     crop: str,
     state: str,
 ):
-    return await get_available_mandi_markets(
-        crop=list(crop_variants(crop)),
-        state=state,
-    )
+    try:
+        return await get_available_mandi_markets(
+            crop=list(crop_variants(crop)),
+            state=state,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail="Mandi database is currently unavailable.") from exc
 
 
 @router.get("/latest")

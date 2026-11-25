@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 from google import genai
-import google.generativeai as genai
 
 from app.core.config import settings
 from app.services.chat_service import (
@@ -18,7 +17,7 @@ from app.services.chat_service import (
 
 logger = logging.getLogger(__name__)
 
-GEMINI_MODEL = "gemini-3.6-flash"
+GEMINI_MODEL = settings.GEMINI_MODEL or "gemini-2.5-flash"
 RECOVERY_HISTORY_LIMIT = 10
 AGRICULTURAL_SYSTEM_INSTRUCTION = """You are AgriTech's agricultural advisor. Provide practical,
 scientifically grounded agronomic guidance suitable for farmers. State important uncertainty,

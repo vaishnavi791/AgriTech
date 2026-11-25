@@ -12,6 +12,7 @@ import {
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { formatCurrency } from '../../utils/validation';
+import useLanguage from '../../hooks/useLanguage';
 
 ChartJS.register(
   CategoryScale,
@@ -25,10 +26,11 @@ ChartJS.register(
 );
 
 export const PriceChart = ({ forecastData, commodity = 'Crop' }) => {
+  const { t } = useLanguage();
   if (!forecastData || !forecastData.dates || forecastData.dates.length === 0) {
     return (
       <div className="p-8 text-center text-earth-muted bg-cream-50 rounded-xl border border-cream-300">
-        No forecast timeline points available.
+        {t('priceFields.emptyChart')}
       </div>
     );
   }
@@ -37,7 +39,7 @@ export const PriceChart = ({ forecastData, commodity = 'Crop' }) => {
     labels: forecastData.dates,
     datasets: [
       {
-        label: 'Observed / projected modal price (₹/Quintal)',
+        label: t('priceFields.observedProjected'),
         data: forecastData.prices,
         fill: false,
         borderColor: '#2F5D50',
@@ -52,7 +54,7 @@ export const PriceChart = ({ forecastData, commodity = 'Crop' }) => {
       ...(forecastData.min_prices
         ? [
             {
-              label: 'Indicative lower range (₹/Quintal)',
+              label: t('priceFields.lowerRange'),
               data: forecastData.min_prices,
               borderColor: '#A4B69A',
               borderDash: [5, 5],
@@ -66,7 +68,7 @@ export const PriceChart = ({ forecastData, commodity = 'Crop' }) => {
       ...(forecastData.max_prices
         ? [
             {
-              label: 'Indicative upper range (₹/Quintal)',
+              label: t('priceFields.upperRange'),
               data: forecastData.max_prices,
               borderColor: '#A4B69A',
               borderDash: [5, 5],
@@ -109,7 +111,7 @@ export const PriceChart = ({ forecastData, commodity = 'Crop' }) => {
       y: {
         title: {
           display: true,
-          text: 'Rate (₹ per Quintal)',
+          text: t('priceFields.rateAxis'),
           font: { size: 11, family: "'Plus Jakarta Sans', sans-serif", weight: 600 },
           color: '#526058',
         },
@@ -124,7 +126,7 @@ export const PriceChart = ({ forecastData, commodity = 'Crop' }) => {
       x: {
         title: {
           display: true,
-          text: 'Timeline Date',
+          text: t('priceFields.dateAxis'),
           font: { size: 11, family: "'Plus Jakarta Sans', sans-serif", weight: 600 },
           color: '#526058',
         },

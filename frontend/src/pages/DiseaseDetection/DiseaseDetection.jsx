@@ -5,9 +5,11 @@ import usePrediction from '../../hooks/usePrediction';
 import ErrorMessage from '../../components/ErrorMessage';
 import Loading from '../../components/Loading';
 import DiseaseResult from './DiseaseResult';
+import useLanguage from '../../hooks/useLanguage';
 
 export const DiseaseDetection = () => {
   const { diseaseResult, setDiseaseResult } = usePrediction();
+  const { t } = useLanguage();
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -20,13 +22,13 @@ export const DiseaseDetection = () => {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      setErrorMessage('Please upload a valid image file (JPG, PNG, WebP).');
+      setErrorMessage('diseaseFields.invalidFile');
       return;
     }
 
     // Max 10MB
     if (file.size > 10 * 1024 * 1024) {
-      setErrorMessage('Image size exceeds 10MB. Please choose a smaller image.');
+      setErrorMessage('diseaseFields.fileTooLarge');
       return;
     }
 
@@ -45,7 +47,7 @@ export const DiseaseDetection = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedFile) {
-      setErrorMessage('Please choose or drag an image of a plant leaf first.');
+      setErrorMessage('diseaseFields.fileRequired');
       return;
     }
 
@@ -56,7 +58,7 @@ export const DiseaseDetection = () => {
       const result = await diseaseService.detectDisease(selectedFile);
       setDiseaseResult(result);
     } catch (err) {
-      const msg = err.response?.data?.detail || err.message || 'Failed to analyze leaf image. Please check backend status.';
+      const msg = err.response?.data?.detail || err.message || 'diseaseFields.failed';
       setErrorMessage(msg);
     } finally {
       setIsLoading(false);
@@ -77,10 +79,10 @@ export const DiseaseDetection = () => {
           <ScanLine className="w-8 h-8" />
         </div>
         <h1 className="font-serif text-3xl font-bold text-earth-dark tracking-tight">
-          Plant Disease Diagnosis
+          {t('modules.diseaseTitle')}
         </h1>
         <p className="text-xs sm:text-sm text-earth-muted max-w-xl mx-auto leading-relaxed">
-          Upload a high-resolution photo of the infected crop leaf to identify pathogenic infections and receive curative action plans.
+          {t('modules.diseaseSubtitle')}
         </p>
       </div>
 
@@ -118,7 +120,7 @@ export const DiseaseDetection = () => {
                   <div className="relative inline-block">
                     <img
                       src={previewUrl}
-                      alt="Upload preview"
+                      alt={t('diseaseFields.previewAlt')}
                       className="max-h-64 rounded-xl shadow-card mx-auto object-contain border border-cream-300"
                     />
                     <button
@@ -128,13 +130,13 @@ export const DiseaseDetection = () => {
                         handleClearFile();
                       }}
                       className="absolute -top-2 -right-2 p-1.5 bg-terracotta-600 text-cream-50 rounded-full shadow hover:bg-terracotta-700 transition"
-                      title="Remove image"
+                      title={t('diseaseFields.removeImage')}
                     >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                   <p className="text-xs text-earth-muted">
-                    {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB) - Click to replace
+                    {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB) - {t('diseaseFields.replaceImage')}
                   </p>
                 </div>
               ) : (
@@ -144,10 +146,10 @@ export const DiseaseDetection = () => {
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-earth-dark">
-                      Click to upload or drag & drop leaf image
+                      {t('diseaseFields.uploadPrompt')}
                     </p>
                     <p className="text-xs text-earth-muted">
-                      Supports JPG, PNG, WEBP (Max 10MB)
+                      {t('diseaseFields.formats')}
                     </p>
                   </div>
                 </div>
@@ -158,9 +160,9 @@ export const DiseaseDetection = () => {
             <div className="p-4 bg-cream-50 rounded-xl border border-cream-300 flex items-start space-x-3 text-xs text-earth-muted">
               <ImageIcon className="w-4 h-4 text-agri-600 flex-shrink-0 mt-0.5" />
               <div>
-                <span className="font-semibold text-earth-dark">Tips for best diagnostic results:</span>
+                <span className="font-semibold text-earth-dark">{t('diseaseFields.tipsTitle')}</span>
                 <p className="mt-0.5 leading-relaxed">
-                  Capture the leaf in clear daylight with both affected symptoms and unaffected green tissue visible. Avoid blurry or shadowy photos.
+                  {t('diseaseFields.tipsText')}
                 </p>
               </div>
             </div>
@@ -172,10 +174,10 @@ export const DiseaseDetection = () => {
                 className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 bg-agri-600 hover:bg-agri-700 text-cream-50 font-semibold rounded-lg shadow-card hover:shadow-card-hover transition disabled:opacity-50"
               >
                 {isLoading ? (
-                  <Loading message="Classifying leaf pathology..." size="small" />
+                  <Loading message="diseaseFields.processing" size="small" />
                 ) : (
                   <>
-                    <span>Diagnose Crop Health</span>
+                    <span>{t('diseaseFields.diagnose')}</span>
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </>
                 )}

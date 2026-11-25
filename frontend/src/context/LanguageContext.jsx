@@ -5,6 +5,18 @@ export const LanguageContext = createContext(null);
 
 const STORAGE_KEY = 'agritech_lang';
 
+const findEnglishPath = (value, target, prefix = []) => {
+  for (const [key, child] of Object.entries(value)) {
+    const path = [...prefix, key];
+    if (child === target) return path;
+    if (child && typeof child === 'object') {
+      const found = findEnglishPath(child, target, path);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+
 export const LanguageProvider = ({ children }) => {
   const [language, setLanguageState] = useState(() => {
     try {
@@ -35,7 +47,7 @@ export const LanguageProvider = ({ children }) => {
    */
   const t = useCallback(
     (keyPath) => {
-      if (!keyPath) return '';
+      if (typeof keyPath !== 'string' || !keyPath) return '';
       const keys = keyPath.split('.');
 
       // Try current language dictionary
@@ -51,6 +63,17 @@ export const LanguageProvider = ({ children }) => {
 
       if (current !== undefined && typeof current === 'string') {
         return current;
+      }
+
+      const englishPath = findEnglishPath(translations.en, keyPath);
+      if (englishPath) {
+        let localized = translations[language];
+        for (const key of englishPath) {
+          localized = localized && typeof localized === 'object'
+            ? localized[key]
+            : undefined;
+        }
+        if (typeof localized === 'string') return localized;
       }
 
       // Fallback to English dictionary
