@@ -37,9 +37,9 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
 
-    # Gemini API configuration (reserved for future chatbot implementation)
+    # Gemini API configuration for the AI Agri Assistant
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_MODEL: str = "gemini-3-flash-preview"
 
     # External SLUSI GeoJSONL file. It remains outside this repository.
     SLUSI_SOIL_DATASET_PATH: str = ""

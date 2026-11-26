@@ -3,11 +3,10 @@
 import asyncio
 import io
 import logging
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 import numpy as np
 from PIL import Image, UnidentifiedImageError
 from fastapi import HTTPException, UploadFile, status
-import tf_keras as keras
 
 from app.core.config import BACKEND_DIR, settings
 from app.schemas.disease import DiseasePredictResponse
@@ -76,7 +75,7 @@ class DiseaseService:
     """Service managing disease classification model lifecycle and prediction."""
 
     def __init__(self) -> None:
-        self._model: Optional[keras.Model] = None
+        self._model: Optional[Any] = None
 
     async def load_model(self) -> None:
         """Loads fine_tuned_model.h5 once at application startup."""
@@ -89,6 +88,8 @@ class DiseaseService:
             return
 
         try:
+            import tf_keras as keras
+
             logger.info("Loading disease model from %s...", MODEL_PATH)
             # Use tf_keras for backward-compatible deserialization of legacy Keras 2 H5 format
             self._model = keras.models.load_model(str(MODEL_PATH), compile=False)
@@ -97,6 +98,13 @@ class DiseaseService:
                 self._model.input_shape,
                 self._model.output_shape,
             )
+        except (ImportError, OSError) as exc:
+            logger.error(
+                "Disease model runtime unavailable in this environment: %s",
+                type(exc).__name__,
+            )
+            self._model = None
+            return
         except Exception as exc:
             logger.error("Failed to load disease model from %s: %s", MODEL_PATH, str(exc))
             self._model = None

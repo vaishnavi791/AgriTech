@@ -199,7 +199,7 @@ Tokens contain the user identity and an expiration claim. Expired, malformed, in
 `POST /api/chatbot/chat` accepts a non-empty `message` and an optional application `session_id`.
 Anonymous requests remain supported. When a valid bearer token is supplied, persisted chat records are associated with that user; this endpoint does not change the authentication requirements of any existing route.
 
-The assistant uses `google-genai==2.23.0`, `gemini-3.8-flash`, and the asynchronous Gemini Interactions API. The browser keeps a durable application session ID in local storage. MongoDB remains the durable application conversation history; each assistant record stores the provider continuation identifier separately at `metadata.provider_interaction_id`.
+The assistant uses `google-genai==2.23.0`, the model configured by `GEMINI_MODEL` (default: `gemini-3-flash-preview`), and the asynchronous Gemini models API. Set `GEMINI_API_KEY` in `backend/.env` to a valid Google AI Studio key, then restart the backend; the key is never sent to the browser. The browser keeps a durable application session ID in local storage. MongoDB remains the durable application conversation history; each assistant record stores the provider continuation identifier separately at `metadata.provider_interaction_id`.
 
 Normal turns continue with that provider identifier. If Gemini explicitly rejects the prior continuation interaction as unavailable or expired, the backend rebuilds a new provider interaction from up to ten recent MongoDB messages. Database history lookup and persistence are best-effort, so MongoDB outages do not prevent an otherwise successful assistant response. Gemini credentials are read from `GEMINI_API_KEY` and must never be logged or committed.
 

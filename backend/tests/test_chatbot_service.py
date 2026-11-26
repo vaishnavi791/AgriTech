@@ -13,6 +13,19 @@ class ProviderFailure(Exception):
 
 
 class ChatbotServiceTests(unittest.IsolatedAsyncioTestCase):
+    async def test_missing_or_whitespace_api_key_reports_actionable_configuration_error(self):
+        for api_key in ("", "   "):
+            with (
+                patch.object(chatbot_service.settings, "GEMINI_API_KEY", api_key),
+                patch.object(chatbot_service.genai, "Client") as client,
+            ):
+                with self.assertRaises(chatbot_service.ChatbotProviderError) as raised:
+                    await chatbot_service._create_interaction("Hello")
+
+            self.assertEqual(raised.exception.status_code, 503)
+            self.assertIn("GEMINI_API_KEY", raised.exception.message)
+            client.assert_not_called()
+
     async def test_normal_continuation_uses_latest_provider_id_and_persists_metadata(self):
         interaction = SimpleNamespace(output_text="Water in the early morning.", id="interaction-new")
         save_message = AsyncMock()

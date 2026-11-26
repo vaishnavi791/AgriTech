@@ -82,17 +82,21 @@ export const Chatbot = () => {
       };
       setMessages((prev) => [...prev, botMsg]);
     } catch (err) {
+      const responseData = err.response?.data;
       const detail =
+        responseData?.error?.message ||
         err.response?.data?.message ||
-        err.response?.data?.detail ||
+        responseData?.detail ||
         err.message ||
         'Unable to connect to AI Chatbot service.';
-      setErrorMessage(detail);
-      // Append fallback notification inside chat
+      const safeDetail = typeof detail === 'string'
+        ? detail
+        : 'The AI service could not process the request. Please try again.';
+      setErrorMessage(safeDetail);
       const errorMsg = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `Error: ${detail}. Please ensure the backend server is running.`,
+        content: safeDetail,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, errorMsg]);

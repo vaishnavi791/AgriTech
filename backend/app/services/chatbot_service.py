@@ -3,9 +3,12 @@
 import asyncio
 import logging
 from typing import Any, Dict, List, Optional
+from types import SimpleNamespace
+from uuid import uuid4
 
 import httpx
 from google import genai
+from google.genai import types
 
 from app.core.config import settings
 from app.services.chat_service import (
@@ -17,7 +20,7 @@ from app.services.chat_service import (
 
 logger = logging.getLogger(__name__)
 
-GEMINI_MODEL = settings.GEMINI_MODEL or "gemini-2.5-flash"
+GEMINI_MODEL = settings.GEMINI_MODEL or "gemini-3-flash-preview"
 RECOVERY_HISTORY_LIMIT = 10
 AGRICULTURAL_SYSTEM_INSTRUCTION = """You are AgriTech's agricultural advisor. Provide practical,
 scientifically grounded agronomic guidance suitable for farmers. State important uncertainty,
@@ -63,6 +66,11 @@ def _is_continuation_state_error(exc: Exception) -> bool:
 
 def _translate_provider_error(exc: Exception) -> ChatbotProviderError:
     """Convert provider failures to the approved, user-safe HTTP contract."""
+    logger.error(
+        "Gemini request failed (type=%s, status=%s)",
+        type(exc).__name__,
+        _provider_status_code(exc),
+    )
     if isinstance(exc, (asyncio.TimeoutError, TimeoutError, httpx.TimeoutException)):
         return ChatbotProviderError(504, "The AI service timed out. Please try again.")
 
@@ -98,18 +106,26 @@ def _recovery_steps(history: List[Dict[str, Any]], current_message: str) -> List
 
 
 async def _create_interaction(input_data: Any, previous_interaction_id: Optional[str] = None) -> Any:
-    if not settings.GEMINI_API_KEY:
-        raise ChatbotProviderError(503, "The AI service is not configured.")
+    api_key = settings.GEMINI_API_KEY.strip()
+    if not api_key:
+        logger.error("Gemini is not configured: GEMINI_API_KEY is missing from the backend environment.")
+        raise ChatbotProviderError(
+            503,
+            "The AI service is not configured. Set GEMINI_API_KEY in backend/.env and restart the backend.",
+        )
 
-    client = genai.Client(api_key=settings.GEMINI_API_KEY)
-    arguments: Dict[str, Any] = {
-        "model": GEMINI_MODEL,
-        "input": input_data,
-        "system_instruction": AGRICULTURAL_SYSTEM_INSTRUCTION,
-    }
-    if previous_interaction_id:
-        arguments["previous_interaction_id"] = previous_interaction_id
-    return await client.aio.interactions.create(**arguments)
+    client = genai.Client(api_key=api_key)
+    response = await client.aio.models.generate_content(
+        model=GEMINI_MODEL,
+        contents=input_data,
+        config=types.GenerateContentConfig(
+            system_instruction=AGRICULTURAL_SYSTEM_INSTRUCTION,
+        ),
+    )
+    reply = getattr(response, "text", None)
+    if not isinstance(reply, str) or not reply.strip():
+        raise ChatbotProviderError(502, "The AI service returned an incomplete response.")
+    return SimpleNamespace(output_text=reply, id=f"gemini-{uuid4()}")
 
 
 async def _get_recovery_history(session_id: str) -> List[Dict[str, Any]]:
