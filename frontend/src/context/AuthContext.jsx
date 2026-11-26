@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import authService from '../services/authService';
+import { getUserFriendlyError } from '../utils/errorHandling';
 
 export const AuthContext = createContext(null);
 
@@ -8,6 +9,17 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => authService.getStoredUser());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setToken(null);
+      setUser(null);
+      setError('common.errors.sessionExpired');
+    };
+
+    window.addEventListener('agritech:session-expired', handleSessionExpired);
+    return () => window.removeEventListener('agritech:session-expired', handleSessionExpired);
+  }, []);
 
   // Sync token from localStorage and fetch current user profile if token exists
   useEffect(() => {
@@ -20,10 +32,11 @@ export const AuthProvider = ({ children }) => {
           if (currentUser) {
             setUser(currentUser);
           }
-        } catch {
+        } catch (err) {
           authService.logout();
           setToken(null);
           setUser(null);
+          setError(getUserFriendlyError(err));
         } finally {
           setIsLoading(false);
         }
@@ -44,7 +57,7 @@ export const AuthProvider = ({ children }) => {
       }
       return data;
     } catch (err) {
-      const msg = err.response?.data?.detail || err.message || 'Login failed. Please check your credentials.';
+      const msg = getUserFriendlyError(err);
       setError(msg);
       throw new Error(msg);
     } finally {
@@ -63,7 +76,7 @@ export const AuthProvider = ({ children }) => {
       }
       return data;
     } catch (err) {
-      const msg = err.response?.data?.detail || err.message || 'Registration failed. Please try again.';
+      const msg = getUserFriendlyError(err, 'common.errors.unexpected');
       setError(msg);
       throw new Error(msg);
     } finally {

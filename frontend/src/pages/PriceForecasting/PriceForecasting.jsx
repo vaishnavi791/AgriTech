@@ -14,6 +14,7 @@ import PriceChart from './PriceChart';
 import PredictionCard from '../../components/PredictionCard';
 import { formatCurrency } from '../../utils/validation';
 import useLanguage from '../../hooks/useLanguage';
+import { getUserFriendlyError } from '../../utils/errorHandling';
 
 const inputClass =
   'w-full px-3.5 py-2 text-sm bg-cream-50/50 border border-cream-300 rounded-lg text-earth-dark focus:ring-2 focus:ring-agri-600 focus:border-agri-600 outline-none transition';
@@ -63,7 +64,7 @@ export const PriceForecasting = () => {
         }
       } catch (error) {
         if (active) {
-          setErrorMessage(error.response?.data?.detail || 'priceFields.loadCommoditiesError');
+          setErrorMessage(getUserFriendlyError(error, 'priceFields.loadCommoditiesError'));
         }
       } finally {
         if (active) setMetadataLoading(false);
@@ -100,10 +101,10 @@ export const PriceForecasting = () => {
         if (!active) return;
         setStates([]);
         setFormData((current) => ({ ...current, state: '', market: '' }));
-        setErrorMessage(error.response?.data?.detail || {
+        setErrorMessage(getUserFriendlyError(error, {
           key: 'priceFields.loadStatesError',
           params: { commodity: formData.commodity },
-        });
+        }));
       } finally {
         if (active) setStatesLoading(false);
       }
@@ -140,13 +141,13 @@ export const PriceForecasting = () => {
         if (!active) return;
         setMarkets([]);
         setFormData((current) => ({ ...current, market: '' }));
-        setErrorMessage(error.response?.data?.detail || {
+        setErrorMessage(getUserFriendlyError(error, {
           key: 'priceFields.loadMarketsError',
           params: {
             commodity: formData.commodity,
             state: formData.state,
           },
-        });
+        }));
       } finally {
         if (active) setMarketsLoading(false);
       }
@@ -183,7 +184,6 @@ export const PriceForecasting = () => {
       setPriceResult(result);
     } catch (error) {
       setPriceResult(null);
-      const detail = error.response?.data?.detail;
       if (error.response?.status === 404) {
         setErrorMessage({
           key: 'priceFields.noRecordsForSelection',
@@ -193,11 +193,7 @@ export const PriceForecasting = () => {
           },
         });
       } else {
-        setErrorMessage(
-          (Array.isArray(detail) ? detail.map((item) => item.msg).join(', ') : detail) ||
-            error.message ||
-            'priceFields.forecastError'
-        );
+        setErrorMessage(getUserFriendlyError(error, 'priceFields.forecastError'));
       }
     } finally {
       setIsLoading(false);

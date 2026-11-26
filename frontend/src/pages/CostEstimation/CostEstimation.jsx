@@ -6,6 +6,7 @@ import ErrorMessage from '../../components/ErrorMessage';
 import Loading from '../../components/Loading';
 import CostResult from './CostResult';
 import useLanguage from '../../hooks/useLanguage';
+import { getUserFriendlyError } from '../../utils/errorHandling';
 
 export const CostEstimation = ({ initialCrop = null }) => {
   const { costResult, setCostResult } = usePrediction();
@@ -54,10 +55,7 @@ export const CostEstimation = ({ initialCrop = null }) => {
           : commodities[0]?.commodity || '';
         setFormData((current) => ({ ...current, crop: preferredCrop }));
       } catch (err) {
-        setErrorMessage(
-          err.response?.data?.detail ||
-            'costFields.commoditiesError'
-        );
+        setErrorMessage(getUserFriendlyError(err, 'costFields.commoditiesError'));
       } finally {
         setMetadataLoading(false);
       }
@@ -82,10 +80,10 @@ export const CostEstimation = ({ initialCrop = null }) => {
         }));
       } catch (err) {
         setAvailableStates([]);
-        setErrorMessage(
-          err.response?.data?.detail ||
-            { key: 'costFields.statesError', params: { crop: formData.crop } }
-        );
+        setErrorMessage(getUserFriendlyError(err, {
+          key: 'costFields.statesError',
+          params: { crop: formData.crop },
+        }));
       }
     };
 
@@ -102,8 +100,12 @@ export const CostEstimation = ({ initialCrop = null }) => {
           formData.state
         );
         setAvailableMarkets(markets);
-      } catch {
+      } catch (err) {
         setAvailableMarkets([]);
+        setErrorMessage(getUserFriendlyError(err, {
+          key: 'costFields.marketsError',
+          params: { crop: formData.crop, state: formData.state },
+        }));
       }
     };
 
@@ -126,10 +128,10 @@ export const CostEstimation = ({ initialCrop = null }) => {
         }));
       } catch (err) {
         setAvailableCommodities([]);
-        setErrorMessage(
-          err.response?.data?.detail ||
-            { key: 'costFields.stateCommoditiesError', params: { state: formData.state } }
-        );
+        setErrorMessage(getUserFriendlyError(err, {
+          key: 'costFields.stateCommoditiesError',
+          params: { state: formData.state },
+        }));
       }
     };
 
@@ -168,8 +170,10 @@ export const CostEstimation = ({ initialCrop = null }) => {
         setErrorMessage(
           err.response?.status === 404
             ? { key: 'costFields.priceError', params: { crop: formData.crop, state: formData.state } }
-            : err.response?.data?.detail ||
-                { key: 'costFields.priceError', params: { crop: formData.crop, state: formData.state } }
+            : getUserFriendlyError(err, {
+                key: 'costFields.priceError',
+                params: { crop: formData.crop, state: formData.state },
+              })
         );
       } finally {
         setMandiLoading(false);
@@ -239,16 +243,7 @@ export const CostEstimation = ({ initialCrop = null }) => {
       const result = await costService.estimateCost(payload);
       setCostResult(result);
     } catch (err) {
-      const msg =
-        err.response?.data?.detail ||
-        err.message ||
-        'costFields.estimateError';
-
-      setErrorMessage(
-        Array.isArray(msg)
-          ? msg.map((item) => item.msg).join(', ')
-          : msg
-      );
+      setErrorMessage(getUserFriendlyError(err, 'costFields.estimateError'));
     } finally {
       setIsLoading(false);
     }

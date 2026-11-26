@@ -66,8 +66,8 @@ export const validateRegisterForm = ({ name, email, password, confirmPassword })
 
   if (!password) {
     errors.password = 'Please enter your password.';
-  } else if (!isValidPassword(password)) {
-    errors.password = 'Password must be at least 6 characters long.';
+  } else if (password.length < 8) {
+    errors.password = 'Password must be at least 8 characters long.';
   }
 
   if (!confirmPassword) {

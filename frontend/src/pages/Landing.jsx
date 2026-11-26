@@ -88,7 +88,7 @@ export const Landing = () => {
 
         {/* Directional Vignette Overlay for Crisp Typography Contrast */}
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent pointer-events-none" />
-        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-cream-100 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-32 sm:h-40 bg-gradient-to-t from-black/55 via-black/20 to-transparent pointer-events-none" />
 
         {/* Hero Content */}
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 lg:pt-40 lg:pb-28 w-full">
@@ -182,7 +182,7 @@ export const Landing = () => {
           />
           {/* Deep dark gradient overlay allowing text to float naturally */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/20 lg:w-3/4 pointer-events-none" />
-          <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-cream-100/30 to-transparent pointer-events-none" />
+          <div className="absolute inset-x-0 top-0 h-32 sm:h-40 bg-gradient-to-b from-black/55 via-black/20 to-transparent pointer-events-none" />
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
         </div>
 

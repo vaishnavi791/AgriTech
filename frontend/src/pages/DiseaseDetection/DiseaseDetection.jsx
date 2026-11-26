@@ -6,6 +6,7 @@ import ErrorMessage from '../../components/ErrorMessage';
 import Loading from '../../components/Loading';
 import DiseaseResult from './DiseaseResult';
 import useLanguage from '../../hooks/useLanguage';
+import { getUserFriendlyError } from '../../utils/errorHandling';
 
 export const DiseaseDetection = () => {
   const { diseaseResult, setDiseaseResult } = usePrediction();
@@ -58,8 +59,7 @@ export const DiseaseDetection = () => {
       const result = await diseaseService.detectDisease(selectedFile);
       setDiseaseResult(result);
     } catch (err) {
-      const msg = err.response?.data?.detail || err.message || 'diseaseFields.failed';
-      setErrorMessage(msg);
+      setErrorMessage(getUserFriendlyError(err, 'diseaseFields.failed'));
     } finally {
       setIsLoading(false);
     }

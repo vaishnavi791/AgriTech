@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_BASE_URL, STORAGE_KEYS } from '../utils/constants';
+import { getUserFriendlyError } from '../utils/errorHandling';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -18,24 +19,26 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor: handle 401 unauthorized
+// Normalize API failures and clear expired sessions.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      // Clear token and user on 401
+    const requestPath = error.config?.url?.split('?')[0] || '';
+    if (error.response?.status === 401) {
       localStorage.removeItem(STORAGE_KEYS.TOKEN);
       localStorage.removeItem(STORAGE_KEYS.USER);
+      if (!requestPath.includes('/auth/login')) {
+        window.dispatchEvent(new Event('agritech:session-expired'));
+      }
     }
-    const apiMessage =
-      error.response?.data?.error?.message ||
-      error.response?.data?.detail;
-    if (typeof apiMessage === 'string') {
-      error.message = apiMessage;
-    }
-    if (!error.response) {
-      error.message = 'Unable to reach the AgriTech server. Please verify that the backend is running.';
-    }
+
+    error.userMessage = getUserFriendlyError(error);
+    error.message = error.userMessage;
+    console.error('AgriTech API request failed', {
+      path: requestPath,
+      status: error.response?.status,
+      code: error.code,
+    });
     return Promise.reject(error);
   }
 );

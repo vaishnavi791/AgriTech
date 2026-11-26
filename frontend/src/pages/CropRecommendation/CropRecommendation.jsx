@@ -9,6 +9,7 @@ import { SOIL_TYPES, SEASONS, UP_DISTRICTS } from '../../utils/constants';
 import soilService from '../../services/soilService';
 import apyService from '../../services/apyService';
 import useLanguage from '../../hooks/useLanguage';
+import { getUserFriendlyError } from '../../utils/errorHandling';
 
 export const CropRecommendation = () => {
   const { cropResult, setCropResult } = usePrediction();
@@ -67,8 +68,7 @@ export const CropRecommendation = () => {
               ? Number(soilData.ph).toFixed(1)
               : prev.ph,
         }));
-      } catch (err) {
-        console.warn('District soil service failed:', err);
+      } catch {
         // Continue with manually entered soil values as fallback
       }
     }
@@ -94,8 +94,8 @@ export const CropRecommendation = () => {
         });
 
         apyCandidates = apyResp?.candidates ?? [];
-      } catch (err) {
-        console.warn('APY service failed:', err);
+      } catch {
+        // Historical candidates are optional; continue with the model recommendation.
       }
     }
 
@@ -111,12 +111,7 @@ export const CropRecommendation = () => {
 
       setCropResult(enrichedResult);
     } catch (err) {
-      const msg =
-        err.response?.data?.detail ||
-        err.message ||
-        t('uiErrors.cropPrediction');
-
-      setErrorMessage(msg);
+      setErrorMessage(getUserFriendlyError(err, 'uiErrors.cropPrediction'));
     } finally {
       setIsLoading(false);
     }

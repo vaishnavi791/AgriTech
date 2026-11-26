@@ -47,8 +47,9 @@ export const authService = {
     } catch (error) {
       if (error.response && error.response.status === 401) {
         this.logout();
+        return null;
       }
-      return null;
+      throw error;
     }
   },
 

@@ -6,10 +6,12 @@ export const ErrorMessage = ({ message, onDismiss, onRetry }) => {
   const { t } = useLanguage();
   if (!message) return null;
   const displayMessage = typeof message === 'object' && message.key
-    ? Object.entries(message.params || {}).reduce(
-        (text, [name, value]) => text.replaceAll(`{${name}}`, value),
-        t(message.key)
-      )
+    ? Object.entries(message.params || {}).reduce((text, [name, value]) => {
+        const parameter = value && typeof value === 'object' && value.key
+          ? t(value.key)
+          : value;
+        return text.replaceAll(`{${name}}`, parameter);
+      }, t(message.key))
     : t(message);
 
   return (

@@ -4,6 +4,7 @@ import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import chatbotService from '../../services/chatbotService';
 import useLanguage from '../../hooks/useLanguage';
+import { getUserFriendlyError } from '../../utils/errorHandling';
 
 const CHATBOT_SESSION_STORAGE_KEY = 'agritech_chatbot_session_id';
 
@@ -30,7 +31,6 @@ export const Chatbot = () => {
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(null);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -64,7 +64,6 @@ export const Chatbot = () => {
 
     setMessages((prev) => [...prev, userMsg]);
     setIsLoading(true);
-    setErrorMessage(null);
 
     try {
       const response = await chatbotService.sendMessage(text, sessionId);
@@ -82,17 +81,7 @@ export const Chatbot = () => {
       };
       setMessages((prev) => [...prev, botMsg]);
     } catch (err) {
-      const responseData = err.response?.data;
-      const detail =
-        responseData?.error?.message ||
-        err.response?.data?.message ||
-        responseData?.detail ||
-        err.message ||
-        'Unable to connect to AI Chatbot service.';
-      const safeDetail = typeof detail === 'string'
-        ? detail
-        : 'The AI service could not process the request. Please try again.';
-      setErrorMessage(safeDetail);
+      const safeDetail = t(getUserFriendlyError(err, 'chatbot.errors.unavailable'));
       const errorMsg = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
