@@ -8,10 +8,12 @@ import {
   ExternalLink,
   Sparkles
 } from 'lucide-react';
+import useAuth from '../hooks/useAuth';
 import useLanguage from '../hooks/useLanguage';
 import useInView from '../hooks/useInView';
 
 export const Landing = () => {
+  const { isAuthenticated } = useAuth();
   const { t } = useLanguage();
 
   // Audio Ambience State & Controller
@@ -123,13 +125,24 @@ export const Landing = () => {
                 <ChevronRight className="w-4 h-4 text-agri-700" />
               </button>
 
-              <Link
-                to="/register"
-                className="inline-flex items-center space-x-2 px-6 py-3.5 rounded-xl bg-black/30 hover:bg-black/45 text-white border border-white/25 hover:border-white/50 text-xs sm:text-sm font-medium transition-all duration-200 backdrop-blur-sm"
-              >
-                <span>{t('hero.createAccountBtn')}</span>
-                <ArrowRight className="w-4 h-4 text-cream-200" />
-              </Link>
+              {!isAuthenticated && (
+                <>
+                  <Link
+                    to="/login"
+                    className="inline-flex items-center space-x-2 px-6 py-3.5 rounded-xl bg-black/30 hover:bg-black/45 text-white border border-white/25 hover:border-white/50 text-xs sm:text-sm font-medium transition-all duration-200 backdrop-blur-sm"
+                  >
+                    <span>{t('auth.signInBtn')}</span>
+                    <ArrowRight className="w-4 h-4 text-cream-200" />
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="inline-flex items-center space-x-2 px-6 py-3.5 rounded-xl bg-black/30 hover:bg-black/45 text-white border border-white/25 hover:border-white/50 text-xs sm:text-sm font-medium transition-all duration-200 backdrop-blur-sm"
+                  >
+                    <span>{t('hero.createAccountBtn')}</span>
+                    <ArrowRight className="w-4 h-4 text-cream-200" />
+                  </Link>
+                </>
+              )}
 
               {/* Minimal Sound Toggle Integrated in Hero */}
               <button
